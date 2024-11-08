@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET7_0;NETCOREAPP
 X:\ChatApp\ChatApp\App.xaml
-2-711764486
+2531495031
 
-12-859293951
+12938807189
 198-1133866272
-MainWindow.xaml;Views\GameBoard.xaml;
+Views\GameBoard.xaml;Views\MainWindow.xaml;
 
-False
+True
 

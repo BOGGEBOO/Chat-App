@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 using ChatApp.Models;
 using ChatApp.ViewModels;
 
-namespace ChatApp
+namespace ChatApp.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
