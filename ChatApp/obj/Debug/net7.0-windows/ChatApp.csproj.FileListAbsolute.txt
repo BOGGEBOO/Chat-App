@@ -42,3 +42,5 @@ X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\ChatApp.AssemblyInfo.cs
 X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\ChatApp.csproj.CoreCompileInputs.cache
 X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\ChatApp.genruntimeconfig.cache
 X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\ref\ChatApp.dll
+X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\Views\ChatWindow.g.cs
+X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\Views\ChatWindow.baml

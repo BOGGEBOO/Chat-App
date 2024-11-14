@@ -1,25 +1,139 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ChatApp.example
+namespace ChatApp.Models
 {
     internal class NetworkManager : INotifyPropertyChanged
     {
-        event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+
+        private TcpClient client;
+        private TcpClient endPoint;
+        private TcpClient pendingClient;
+        private TcpListener server;
+        private NetworkStream stream;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(string propertyName = "")
         {
-            add
+            if (PropertyChanged != null)
             {
-                throw new NotImplementedException();
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+
+            }
+        }
+
+        public string startServer(string host, int port)
+        {
+            try
+            {
+                Task.Factory.StartNew(async () =>
+                {
+                    IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(host), port);
+                    server = new TcpListener(ipEndPoint);
+
+                    try
+                    {
+                        server.Start();
+                        System.Diagnostics.Debug.WriteLine("Start listening...");
+
+                        client = server.AcceptTcpClient();
+                        this.endPoint = client;
+                        pendingClient = client;
+                        System.Diagnostics.Debug.WriteLine("Connection accepted!");
+                        handleConnection(endPoint);
+
+
+                    }
+                
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                    
+
+                    }
+                });
+                return "200 OK";
+            }
+            catch (SocketException ex)
+            {
+                if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                {
+                    System.Diagnostics.Debug.WriteLine("The address is already in use.");
+                    return "The address is already in use.";
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Error starting server: " + ex.Message);
+                    return "Error starting server";
+                }
+            }
+            catch (Exception e)
+            {
+                return "Error starting server";
             }
 
-            remove
+            // return "200 OK";
+        }
+
+        public void stopServer()
+        {
+
+        }
+
+        public string startClient(string host, int port)
+        {
+            string errorMessage = "Error connecting to server. Check your information. ";
+            try
             {
-                throw new NotImplementedException();
+                client = new TcpClient(host, port);
+
+                IPAddress ipAddress = IPAddress.Parse(host);
+
+                System.Diagnostics.Debug.WriteLine("Start connecting...");
+                var result = client.BeginConnect(ipAddress, port, null, null);
+                bool success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+                if (!success)
+                    return "Error when connecting";
+                
+                stream = client.GetStream();
+            } 
+            catch (SocketException ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return "Error when connecting";
+               
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                
+                return errorMessage;
+            }
+            return "200 OK";
+        }
+
+        private void handleConnection(TcpClient endPoint)
+        {
+            stream = endPoint.GetStream();
+            var buffer = new byte[1024];
+
+            while (true)
+            {
+                int received = stream.Read(buffer, 0, 1024);
+                if (received == 0)
+                    break;
+                var message = Encoding.UTF8.GetString(buffer, 0, received);
             }
         }
     }
+
+    
 }

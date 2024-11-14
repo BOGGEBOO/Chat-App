@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace ChatApp.Models
+namespace ChatApp.example
 {
     internal class NetworkManager : INotifyPropertyChanged
     {

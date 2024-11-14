@@ -9,12 +9,13 @@
     <Grid>
         
         <StackPanel Width="500" VerticalAlignment="Center">
-            <TextBlock Text="Welcome" FontSize="25"></TextBlock>
-            <TextBlock Text="Enter your name:" Margin="0,10,0,10"></TextBlock>
-            <TextBox Text="{Binding UserName}"></TextBox>
-            <TextBlock Text="Enter your portnumber:" Margin="0,10,0,10"></TextBlock>
+            <TextBlock Text="Welcome" FontSize="25" />
+            <TextBlock Text="{Binding ValidationMessage}" Foreground="Red" />
+            <TextBlock Text="Enter your name:" Margin="0,10,0,10" />
+            <TextBox Text="{Binding UserName}" />
+            <TextBlock Text="Enter your portnumber:" Margin="0,10,0,10" />
             <TextBox Text="{Binding PortNumber}"/>
-            <TextBlock Text="Enter your IP-address:" Margin="0,10,0,10"></TextBlock>
+            <TextBlock Text="Enter your IP-address:" Margin="0,10,0,10" />
             <TextBox Text="{Binding IpAddress}"/>
             <Button Content="Start Server" Command="{Binding StartServer}" Margin="0,10,0,10"/>
             <Button Content="Start Client" Command="{Binding StartClient}"/>

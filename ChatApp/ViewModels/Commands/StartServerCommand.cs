@@ -26,7 +26,14 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            parent.startGameBoard();
+            if(parent.ValidateFields(out string errorMessage))
+            {
+                parent.startGameBoard();
+            }
+            else
+            {
+                parent.ValidationMessage = errorMessage;
+            }
         }
     }
 }

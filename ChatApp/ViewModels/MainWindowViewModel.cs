@@ -17,16 +17,24 @@ namespace ChatApp.ViewModels
     internal class MainWindowViewModel : INotifyPropertyChanged
     {
 
-        private NetworkManager NetworkManager { get; set; }
+        public NetworkManager NetworkManager { get; set; }
         private ICommand startServer;
         private ICommand startClient;
+
+        // Konstruktor
+        public MainWindowViewModel(NetworkManager networkManager)
+        {
+            NetworkManager = networkManager;
+            networkManager.PropertyChanged += myModel_PropertyChanged;
+        }
+
         private string userName;
         public string UserName
         {
-            get => this.userName;
+            get => userName;
             set
             {
-                this.userName = value;
+                userName = value;
             }
         }
 
@@ -34,36 +42,31 @@ namespace ChatApp.ViewModels
 
         public string PortNumber
         {
-            get => this.portNumber;
+            get => portNumber;
             set
             {
-                this.portNumber = value;
+                portNumber =value;
             }
         }
 
         private string ipAddress;
         public string IpAddress
         {
-            get => this.ipAddress;
-            set { this.ipAddress = value; }
+            get => ipAddress;
+            set { ipAddress = value; }
         }
 
-        /* private string text;
-
-        public string MyText
+        private string validationMessage;
+        public string ValidationMessage
         {
-            get
-            {
-        
-                return text;
-            }
+            get => validationMessage;
             set
             {
-                text = value;
-                OnPropertyChanged("MyText");
-        
+                validationMessage = value;
+                OnPropertyChanged();
+
             }
-        } */
+        }
 
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -76,12 +79,7 @@ namespace ChatApp.ViewModels
             }
         }
 
-        // Konstruktor
-        public MainWindowViewModel(NetworkManager networkManager)
-        {
-            NetworkManager = networkManager;
-            networkManager.PropertyChanged += myModel_PropertyChanged;
-        }
+        
 
         public ICommand StartServer
         { 
@@ -99,6 +97,10 @@ namespace ChatApp.ViewModels
         public ICommand StartClient
         {
             get {
+                if( startClient == null )
+                {
+                    startClient = new StartClientCommand(this);
+                }
                 return startClient; 
             }
             set { startClient = value; }
@@ -108,78 +110,87 @@ namespace ChatApp.ViewModels
         {
             if (e.PropertyName == "Message")
             {
-                var message = NetworkManager.Message;
-               // this.MyText = message;
+                
             }
         } 
 
-        /* public ICommand StartGame
-        {
-            get
-            {
-                if (startGame == null)
-                    startGame = new StartGameCommand(this);
-                return startGame;
-            }
-            set
-            {
-                startGame = value;
-            }
-        } */
 
-        private bool startConnection()
+        private string startServerConnection()
         {
-            return NetworkManager.startConnection();
+            // bool valid = ValidateFields(out "");
+            return NetworkManager.startServer(ipAddress, Int32.Parse(portNumber));
         }
 
-        public void startGameBoard()
+        private string startClientConnection()
         {
-        
-            if (startConnection())
+            return NetworkManager.startClient(ipAddress, Int32.Parse(portNumber));
+        }
+
+
+        public void startClientBoard()
+        {
+            string result = startClientConnection();
+            if (result == "200 OK")
             {
+                validationMessage = "";
                 GameBoard board = new GameBoard();
                 board.DataContext = this;
                 board.ShowDialog();
             }
             else
             {
-                MessageBox.Show("Cannot start connection!");
+                
+                // MessageBox.Show("Cannot start client connection!");
+                ValidationMessage = result; 
             }
-
-
-
         }
 
-        /* private ICommand enterCommand;
-        public ICommand EnterCommand
+        public void startGameBoard()
         {
-            get
+        
+            string result = startServerConnection();
+            if (result  == "200 OK")
             {
-                if (enterCommand == null)
-                {
-                    return new Command.KeyEnterCommand(this);
-                }
-                else
-                {
-                    return enterCommand;
-
-                }
+                validationMessage = "";
+                ChatWindow chat = new ChatWindow(userName);
+                chat.DataContext = this;
+                chat.ShowDialog();
+                /* 
+                 * GameBoard board = new GameBoard();
+                 * board.DataContext = this;
+                 * board.ShowDialog(); 
+                */
             }
-            set { enterCommand = value; }
+            else
+            {
+                ValidationMessage = result;
+                // MessageBox.Show("Cannot start server connection!");
+            }
+
+
+
         }
 
-        public void sendMessage()
+        public bool ValidateFields(out string errorMessage)
         {
-            NetworkManager.sendChar(MyText);
-        } */
+            errorMessage = "";
+            if (string.IsNullOrWhiteSpace(UserName))
+            {
+                errorMessage += "Username is required.\n";
+            }
 
-        /* public void showGameBoard()
-        {
-            GameBoard gameBoard = new GameBoard();
-            gameBoard.DataContext = this;
-            gameBoard.ShowDialog();
-        } */
+            if (string.IsNullOrWhiteSpace(IpAddress))
+            {
+                errorMessage += "Valid IP address is required.\n";
+            }
 
+            if (string.IsNullOrWhiteSpace(portNumber) || !int.TryParse(portNumber, out int _))
+            {
+                errorMessage += "Valid port number is required.\n";
+            }
+
+            return string.IsNullOrEmpty(errorMessage);
+        }   
 
     }
 }
