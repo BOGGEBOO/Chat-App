@@ -7,17 +7,10 @@
         mc:Ignorable="d"
         Title="ChatWindow" Height="450" Width="800">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="2*"/>
-            
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="3*"/>
-            
-        </Grid.RowDefinitions>
-        <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding UserName}" FontSize="25" Margin="10"/>
-        
+        <StackPanel Width="500" VerticalAlignment="Center">
+            <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding UserName}" FontSize="25" Margin="10"/>
+            <Button Content="Start Client" Command="{Binding AcceptConnection}"/>
+        </StackPanel>
+
     </Grid>
 </Window>

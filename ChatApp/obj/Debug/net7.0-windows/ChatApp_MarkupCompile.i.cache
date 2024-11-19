@@ -4,15 +4,15 @@
 winexe
 C#
 .cs
-X:\ChatApp\ChatApp\obj\Debug\net7.0-windows\
+X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\
 ChatApp
 none
 false
 TRACE;DEBUG;NET;NET7_0;NETCOREAPP
-X:\ChatApp\ChatApp\App.xaml
+X:\TDDD49\ChatApp\App.xaml
 3834693236
 
-14-414765003
+15-2043431636
 198-1133866272
 Views\ChatWindow.xaml;Views\GameBoard.xaml;Views\MainWindow.xaml;
 

@@ -93,7 +93,7 @@ namespace ChatApp.Models
             string errorMessage = "Error connecting to server. Check your information. ";
             try
             {
-                client = new TcpClient(host, port);
+                client = new TcpClient(); //inte ha host, port här, skapar en connection då...
 
                 IPAddress ipAddress = IPAddress.Parse(host);
 
@@ -104,6 +104,8 @@ namespace ChatApp.Models
                     return "Error when connecting";
                 
                 stream = client.GetStream();
+                byte[] sendBuffer = Encoding.UTF8.GetBytes("Is anybody there?");
+                stream.Write(sendBuffer);
             } 
             catch (SocketException ex)
             {
@@ -131,6 +133,7 @@ namespace ChatApp.Models
                 if (received == 0)
                     break;
                 var message = Encoding.UTF8.GetString(buffer, 0, received);
+                System.Diagnostics.Debug.WriteLine(message);
             }
         }
     }

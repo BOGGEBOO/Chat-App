@@ -28,7 +28,7 @@ namespace ChatApp.ViewModels
             networkManager.PropertyChanged += myModel_PropertyChanged;
         }
 
-        private string userName;
+        private string userName = "Kent";
         public string UserName
         {
             get => userName;
@@ -38,7 +38,7 @@ namespace ChatApp.ViewModels
             }
         }
 
-        private string portNumber;
+        private string portNumber = "8000";
 
         public string PortNumber
         {
@@ -49,7 +49,7 @@ namespace ChatApp.ViewModels
             }
         }
 
-        private string ipAddress;
+        private string ipAddress = "127.0.0.1";
         public string IpAddress
         {
             get => ipAddress;
@@ -129,20 +129,20 @@ namespace ChatApp.ViewModels
 
         public void startClientBoard()
         {
-            string result = startClientConnection();
+           /* string result = startClientConnection();
             if (result == "200 OK")
-            {
+            { */
                 validationMessage = "";
                 GameBoard board = new GameBoard();
                 board.DataContext = this;
                 board.ShowDialog();
-            }
+            /*}
             else
             {
                 
                 // MessageBox.Show("Cannot start client connection!");
                 ValidationMessage = result; 
-            }
+            }*/
         }
 
         public void startGameBoard()
