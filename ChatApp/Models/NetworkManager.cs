@@ -1,4 +1,4 @@
-﻿using System;
+﻿                using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -7,6 +7,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+
+using ChatApp.Views;
+using ChatApp.ViewModels;
 
 namespace ChatApp.Models
 {
@@ -18,6 +21,8 @@ namespace ChatApp.Models
         private TcpClient pendingClient;
         private TcpListener server;
         private NetworkStream stream;
+
+        private string pendingClientName;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -43,13 +48,14 @@ namespace ChatApp.Models
                     {
                         server.Start();
                         System.Diagnostics.Debug.WriteLine("Start listening...");
-
+                        
+                        
                         client = server.AcceptTcpClient();
-                        this.endPoint = client;
-                        pendingClient = client;
+                        
+                       
                         System.Diagnostics.Debug.WriteLine("Connection accepted!");
-                        handleConnection(endPoint);
-
+                        stream = client.GetStream();
+                       
 
                     }
                 
@@ -83,29 +89,46 @@ namespace ChatApp.Models
             // return "200 OK";
         }
 
-        public void stopServer()
+        public void close() 
         {
-
+            client.Close();
+            stream.Close();
         }
 
-        public string startClient(string host, int port)
+        public void StopListening(Views.ConnectionRequest request)
+        {
+            if (server != null)
+            {
+                server.Stop();
+                if (pendingClient != null)
+                {
+                    if (request.ShowMessageBox(pendingClientName))
+                    {
+                        MainWindowViewModel.Instance.AddContact(pendingClientName, pendingClient);
+                    }
+                    else
+                    {
+                        pendingClient.Client.Send(Encoding.UTF8.GetBytes("DENIED"));
+                        pendingClient.Close();
+                    }
+                }
+            }
+        }
+
+            public string startClient(string host, int port)
         {
             string errorMessage = "Error connecting to server. Check your information. ";
             try
             {
                 client = new TcpClient(); //inte ha host, port här, skapar en connection då...
 
-                IPAddress ipAddress = IPAddress.Parse(host);
+                while(!client.Connected)
+                {
+                    client.Connect(host, port);
+                }
 
-                System.Diagnostics.Debug.WriteLine("Start connecting...");
-                var result = client.BeginConnect(ipAddress, port, null, null);
-                bool success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
-                if (!success)
-                    return "Error when connecting";
-                
                 stream = client.GetStream();
-                byte[] sendBuffer = Encoding.UTF8.GetBytes("Is anybody there?");
-                stream.Write(sendBuffer);
+                
             } 
             catch (SocketException ex)
             {

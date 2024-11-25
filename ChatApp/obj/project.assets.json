@@ -8,7 +8,7 @@
     "net7.0-windows7.0": []
   },
   "packageFolders": {
-    "C:\\Users\\olibr699\\.nuget\\packages\\": {},
+    "C:\\Users\\aleno962\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
@@ -17,14 +17,14 @@
       "projectUniqueName": "X:\\TDDD49\\ChatApp\\ChatApp.csproj",
       "projectName": "ChatApp",
       "projectPath": "X:\\TDDD49\\ChatApp\\ChatApp.csproj",
-      "packagesPath": "C:\\Users\\olibr699\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\aleno962\\.nuget\\packages\\",
       "outputPath": "X:\\TDDD49\\ChatApp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\olibr699\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\aleno962\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],

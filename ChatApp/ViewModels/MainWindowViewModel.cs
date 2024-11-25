@@ -11,12 +11,13 @@ using System.Windows.Media;
 using ChatApp.Models;
 using ChatApp.Views;
 using ChatApp.ViewModels.Commands;
+using System.Net.Sockets;
 
 namespace ChatApp.ViewModels
 {
     internal class MainWindowViewModel : INotifyPropertyChanged
     {
-
+        public static MainWindowViewModel Instance;
         public NetworkManager NetworkManager { get; set; }
         private ICommand startServer;
         private ICommand startClient;
@@ -26,6 +27,7 @@ namespace ChatApp.ViewModels
         {
             NetworkManager = networkManager;
             networkManager.PropertyChanged += myModel_PropertyChanged;
+            Instance = this;
         }
 
         private string userName = "Kent";
@@ -66,6 +68,11 @@ namespace ChatApp.ViewModels
                 OnPropertyChanged();
 
             }
+        }
+
+        public void StopListening(Views.ConnectionRequest connectionRequest)
+        {
+            NetworkManager.StopListening(connectionRequest);
         }
 
 
@@ -169,6 +176,11 @@ namespace ChatApp.ViewModels
 
 
 
+        }
+
+        public bool AddContact(string name, TcpClient client)
+        {
+            return true;
         }
 
         public bool ValidateFields(out string errorMessage)

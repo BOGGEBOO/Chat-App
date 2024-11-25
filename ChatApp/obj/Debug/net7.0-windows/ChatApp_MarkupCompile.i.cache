@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET7_0;NETCOREAPP
 X:\TDDD49\ChatApp\App.xaml
-3834693236
+4-891527071
 
-15-2043431636
+17-904575872
 198-1133866272
-Views\ChatWindow.xaml;Views\GameBoard.xaml;Views\MainWindow.xaml;
+Views\ChatWindow.xaml;Views\ConnectionRequest.xaml;Views\GameBoard.xaml;Views\MainWindow.xaml;
 
-True
+False
 

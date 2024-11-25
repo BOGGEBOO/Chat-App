@@ -6,9 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
+
+
 namespace ChatApp.ViewModels
 {
-    class ChatWindowViewModel
+    public class ChatWindowViewModel : BaseViewModel
     {
 
         //private ICommand AcceptConnection;

@@ -68,3 +68,5 @@ X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\refint\ChatApp.dll
 X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\ChatApp.pdb
 X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\ChatApp.genruntimeconfig.cache
 X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\ref\ChatApp.dll
+X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\Views\ConnectionRequest.g.cs
+X:\TDDD49\ChatApp\obj\Debug\net7.0-windows\Views\ConnectionRequest.baml
