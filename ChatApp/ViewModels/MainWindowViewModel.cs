@@ -21,6 +21,7 @@ namespace ChatApp.ViewModels
         public NetworkManager NetworkManager { get; set; }
         private ICommand startServer;
         private ICommand startClient;
+        private ICommand stopServer;
 
         // Konstruktor
         public MainWindowViewModel(NetworkManager networkManager)
@@ -28,6 +29,8 @@ namespace ChatApp.ViewModels
             NetworkManager = networkManager;
             networkManager.PropertyChanged += myModel_PropertyChanged;
             Instance = this;
+
+            NetworkManager.showAcceptMessageBox += showAcceptMessageBoxEventHandler;
         }
 
         private string userName = "Kent";
@@ -36,6 +39,7 @@ namespace ChatApp.ViewModels
             get => userName;
             set
             {
+                NetworkManager.Username = value;
                 userName = value;
             }
         }
@@ -101,11 +105,26 @@ namespace ChatApp.ViewModels
             { startServer = value; } 
         }
 
+        public ICommand StopServer
+        {
+            get
+            {
+                if (startServer == null)
+                {
+                    startServer = new StopServerCommand(this);
+                }
+                return startServer;
+            }
+            set
+            { startServer = value; }
+        }
+
         public ICommand StartClient
         {
             get {
                 if( startClient == null )
                 {
+                    NetworkManager.Username = userName;
                     startClient = new StartClientCommand(this);
                 }
                 return startClient; 
@@ -125,11 +144,13 @@ namespace ChatApp.ViewModels
         private string startServerConnection()
         {
             // bool valid = ValidateFields(out "");
+            NetworkManager.Username = userName;
             return NetworkManager.startServer(ipAddress, Int32.Parse(portNumber));
         }
 
         private string startClientConnection()
         {
+            NetworkManager.Username = userName;
             return NetworkManager.startClient(ipAddress, Int32.Parse(portNumber));
         }
 
@@ -158,6 +179,7 @@ namespace ChatApp.ViewModels
             string result = startServerConnection();
             if (result  == "200 OK")
             {
+
                 validationMessage = "";
                 ChatWindow chat = new ChatWindow(userName);
                 chat.DataContext = this;
@@ -204,6 +226,19 @@ namespace ChatApp.ViewModels
             return string.IsNullOrEmpty(errorMessage);
         }   
 
+    
+
+        public void showAcceptMessageBoxEventHandler(object sender, ShowAcceptMessageBoxEventArgs args)
+        {
+            if(MessageBox.Show(args.text, "Connect with this user? ", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                NetworkManager.connectionAccepted = true;
+            }
+            else
+            {
+                NetworkManager.connectionAccepted = false;
+            }
+        }
     }
 }
 

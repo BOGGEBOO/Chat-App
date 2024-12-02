@@ -33,7 +33,7 @@ namespace ChatApp.ViewModels.Commands
                     parent.ValidationMessage = "";
                     parent.startClientBoard();
                 } 
-                else if(isSuccessfull == "Denied")
+                else if(isSuccessfull == "DENIED")
                 {
                     parent.ValidationMessage = "Server denied connection";
                 }

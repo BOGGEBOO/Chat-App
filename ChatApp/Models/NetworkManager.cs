@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 using ChatApp.Views;
 using ChatApp.ViewModels;
+using System.Text.Json;
+using System.Windows.Documents;
 
 namespace ChatApp.Models
 {
@@ -20,9 +22,27 @@ namespace ChatApp.Models
         private TcpClient endPoint;
         private TcpClient pendingClient;
         private TcpListener server;
-        private NetworkStream stream;
+        // private NetworkStream stream;
 
-        private string pendingClientName;
+        private StreamReader reader;
+        private StreamWriter writer;
+
+        public bool connectionAccepted;
+
+        private string sender;
+
+        private bool listening;
+
+        private string username;
+        public string Username
+        {
+            get { return username; }
+            set { username = value; }
+        }
+
+        public event EventHandler<ShowAcceptMessageBoxEventArgs> showAcceptMessageBox;
+
+        // private string pendingClientName;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -37,34 +57,47 @@ namespace ChatApp.Models
 
         public string startServer(string host, int port)
         {
+             
             try
             {
                 Task.Factory.StartNew(async () =>
                 {
-                    IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(host), port);
-                    server = new TcpListener(ipEndPoint);
+                    
+                        
 
                     try
                     {
-                        server.Start();
+                        IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(host), port);
+                        server = new TcpListener(ipEndPoint);
+                        while (true)
+                        {
+
+                            server.Start();
                         System.Diagnostics.Debug.WriteLine("Start listening...");
                         
                         
                         client = server.AcceptTcpClient();
-                        
-                       
-                        System.Diagnostics.Debug.WriteLine("Connection accepted!");
-                        stream = client.GetStream();
-                       
 
+                        reader = new StreamReader(client.GetStream());
+                        writer = new StreamWriter(client.GetStream());
+
+                        System.Diagnostics.Debug.WriteLine("Connection accepted!");
+
+                        if (acceptConnection())
+                        {
+                            break;
                     }
-                
+                       
+                    }
+                    }
+
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.ToString());
+                        System.Diagnostics.Debug.WriteLine(ex.ToString());
                     
 
                     }
+                
                 });
                 return "200 OK";
             }
@@ -86,18 +119,66 @@ namespace ChatApp.Models
                 return "Error starting server";
             }
 
-            // return "200 OK";
         }
 
-        public void close() 
+
+        private bool acceptConnection()
         {
-            client.Close();
-            stream.Close();
-        }
+            
+            while (true)
+            {
+                string data = reader.ReadLine();
 
+                if(data != null)
+                {
+                    Message message = JsonSerializer.Deserialize<Message>(data);
+                    
+                    if(message.Type == "connection")
+                    {
+                        sender = message.Sender;
+                        break;
+                    }
+                }
+            }
+            showAcceptMessageBox?.Invoke(null, new ShowAcceptMessageBoxEventArgs("Chat with " + sender + "?"));
+            while (true) { 
+                if(connectionAccepted)
+                {
+                    Message message = new Message("connection", username, DateTime.Now.ToString(), "ACCEPTED");
+                    sendMessage(message);
+                    return true;
+                }
+                else
+                {
+
+                    Message message = new Message("connection", username, DateTime.Now.ToString(), "DENIED");
+                    sendMessage(message);
+                    writer.Close();
+                    reader.Close();
+                    client.Dispose();
+                    client.Close();
+                    return false;
+                }
+            }
+        }
+        
+        public void Disconnect()
+        {
+            if(client != null && client.Connected)
+            {
+                Message message = new Message("disconnect", username, DateTime.Now.ToString());
+                sendMessage(message);
+                writer.Close();
+                reader.Close();
+                
+                client.Close();
+                
+            }
+            
+        }
         public void StopListening(Views.ConnectionRequest request)
         {
-            if (server != null)
+            /*if (server != null)
             {
                 server.Stop();
                 if (pendingClient != null)
@@ -112,8 +193,8 @@ namespace ChatApp.Models
                         pendingClient.Close();
                     }
                 }
-            }
-        }
+            }*/
+        } 
 
             public string startClient(string host, int port)
         {
@@ -127,7 +208,23 @@ namespace ChatApp.Models
                     client.Connect(host, port);
                 }
 
-                stream = client.GetStream();
+                // stream = client.GetStream();
+
+                writer = new StreamWriter(client.GetStream());
+                reader = new StreamReader(client.GetStream());
+                
+                Message connection_request = new Message("connection", username, DateTime.Now.ToString());
+                sendMessage(connection_request);
+                Message response = receiveMessage();
+
+                if(response.Content == "DENIED" && response.Type == "connection")
+                {
+                    writer.Close();
+                    reader.Close();
+                    client.Close();
+                    return response.Content;
+                    
+                }
                 
             } 
             catch (SocketException ex)
@@ -145,7 +242,60 @@ namespace ChatApp.Models
             return "200 OK";
         }
 
-        private void handleConnection(TcpClient endPoint)
+        public void sendMessage(Message message)
+        {
+            try
+            {
+                if(client.Connected)
+                {
+                    string jsonS = JsonSerializer.Serialize<Message>(message);
+                    
+                    writer.WriteLine(jsonS);
+                    writer.Flush();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+            }
+        }
+
+        public Message receiveMessage()
+        {
+            while (true)
+            {
+                string data = reader.ReadLine();
+
+                if (data != null)
+                {
+                    Message message = JsonSerializer.Deserialize<Message>(data);
+
+                    if (message.Type == "connection")
+                    {
+                        sender = message.Sender;
+                        if(message.Content == "ACCEPTED")
+                        {
+                            // gör nåt
+                        }
+                        else if (message.Content == "DENIED")
+                        {
+                            // skriv ut meddelande
+                            // fett dissad yao
+                            return message;
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine(message.Type);
+                        break;
+                    }
+                }
+            }
+            return new Message("", "", "");
+        }
+
+       /* private void handleConnection(TcpClient endPoint)
         {
             stream = endPoint.GetStream();
             var buffer = new byte[1024];
@@ -158,8 +308,26 @@ namespace ChatApp.Models
                 var message = Encoding.UTF8.GetString(buffer, 0, received);
                 System.Diagnostics.Debug.WriteLine(message);
             }
+        } */
+    
+
+        public void close()
+        {
+            client.Close();
+            // stream.Close();
         }
+
+
+    }
+    public class ShowAcceptMessageBoxEventArgs : EventArgs
+    {
+        public ShowAcceptMessageBoxEventArgs(string s)
+        {
+            text = s;
+        }
+
+        public string text { get; set; }
     }
 
-    
+
 }
