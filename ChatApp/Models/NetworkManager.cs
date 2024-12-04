@@ -1,4 +1,4 @@
-﻿                using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -7,15 +7,17 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 using ChatApp.Views;
 using ChatApp.ViewModels;
 using System.Text.Json;
 using System.Windows.Documents;
+using System.Windows;
 
 namespace ChatApp.Models
 {
-    internal class NetworkManager : INotifyPropertyChanged
+    public class NetworkManager : INotifyPropertyChanged
     {
 
         private TcpClient client;
@@ -23,7 +25,7 @@ namespace ChatApp.Models
         private TcpClient pendingClient;
         private TcpListener server;
         // private NetworkStream stream;
-
+        private Thread thread;
         private StreamReader reader;
         private StreamWriter writer;
 
@@ -31,7 +33,7 @@ namespace ChatApp.Models
 
         private string sender;
 
-        private bool listening;
+        private bool connected;
 
         private string username;
         public string Username
@@ -73,22 +75,22 @@ namespace ChatApp.Models
                         {
 
                             server.Start();
-                        System.Diagnostics.Debug.WriteLine("Start listening...");
+                            System.Diagnostics.Debug.WriteLine("Start listening...");
                         
                         
-                        client = server.AcceptTcpClient();
+                            client = server.AcceptTcpClient();
 
-                        reader = new StreamReader(client.GetStream());
-                        writer = new StreamWriter(client.GetStream());
+                            reader = new StreamReader(client.GetStream());
+                            writer = new StreamWriter(client.GetStream());
 
-                        System.Diagnostics.Debug.WriteLine("Connection accepted!");
+                            System.Diagnostics.Debug.WriteLine("Connection accepted!");
 
-                        if (acceptConnection())
-                        {
-                            break;
-                    }
+                            if (acceptConnection())
+                            {
+                                break;
+                            }
                        
-                    }
+                        }
                     }
 
                     catch (Exception ex)
@@ -140,12 +142,19 @@ namespace ChatApp.Models
                     }
                 }
             }
+            server.Stop();
             showAcceptMessageBox?.Invoke(null, new ShowAcceptMessageBoxEventArgs("Chat with " + sender + "?"));
             while (true) { 
                 if(connectionAccepted)
                 {
                     Message message = new Message("connection", username, DateTime.Now.ToString(), "ACCEPTED");
                     sendMessage(message);
+
+                    thread = new Thread(listen);
+                    thread.IsBackground = true;
+                    thread.Start();
+
+                    connected = true;
                     return true;
                 }
                 else
@@ -157,8 +166,10 @@ namespace ChatApp.Models
                     reader.Close();
                     client.Dispose();
                     client.Close();
+                    connected = false;
                     return false;
                 }
+                
             }
         }
         
@@ -166,15 +177,46 @@ namespace ChatApp.Models
         {
             if(client != null && client.Connected)
             {
+                connected = false;
                 Message message = new Message("disconnect", username, DateTime.Now.ToString());
                 sendMessage(message);
+
                 writer.Close();
                 reader.Close();
-                
                 client.Close();
-                
+                connected = false;
             }
             
+            
+        }
+
+        public void listen()
+        {
+            System.Diagnostics.Debug.WriteLine("debugging listen");
+            while(client.Connected)
+            {
+                try
+                {
+                    if (connected)
+                    {
+                        string data = reader.ReadLine();
+
+                        if (data != null)
+                        {
+                            Message message = JsonSerializer.Deserialize<Message>(data);
+                            if (message.Type == "disconnect")
+                            {
+                                MessageBox.Show(message.Sender + " has disconnected due to natural circumstances.", "whoop", MessageBoxButton.OK);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    System.Diagnostics.Debug.WriteLine(e.ToString());
+                }
+                
+            }
         }
         public void StopListening(Views.ConnectionRequest request)
         {
@@ -226,6 +268,7 @@ namespace ChatApp.Models
                     
                 }
                 
+
             } 
             catch (SocketException ex)
             {
@@ -275,12 +318,12 @@ namespace ChatApp.Models
                         sender = message.Sender;
                         if(message.Content == "ACCEPTED")
                         {
-                            // gör nåt
+                            thread = new Thread(listen);
+                            thread.IsBackground = true;
+                            thread.Start();
                         }
                         else if (message.Content == "DENIED")
                         {
-                            // skriv ut meddelande
-                            // fett dissad yao
                             return message;
                         }
                         break;

@@ -1,16 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 using ChatApp.Models;
 using ChatApp.ViewModels;
@@ -22,10 +11,17 @@ namespace ChatApp.Views
     /// </summary>
     public partial class ChatWindow : Window
     {
-        public ChatWindow(string userName)
+       
+        public ChatWindow(string userName, MainWindow mainWindow, NetworkManager networkManager)
         {
             InitializeComponent();
-            this.DataContext = new ChatWindowViewModel(userName);
+            
+            mainWindow.Close();
+
+            this.DataContext = new ChatWindowViewModel(this, userName, networkManager);
         }
+
+        
+
     }
 }

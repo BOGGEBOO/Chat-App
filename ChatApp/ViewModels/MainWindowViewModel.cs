@@ -21,14 +21,16 @@ namespace ChatApp.ViewModels
         public NetworkManager NetworkManager { get; set; }
         private ICommand startServer;
         private ICommand startClient;
-        private ICommand stopServer;
+       // private ICommand stopServer;
+        private MainWindow mainWindow;
 
         // Konstruktor
-        public MainWindowViewModel(NetworkManager networkManager)
+        public MainWindowViewModel(NetworkManager networkManager, MainWindow mainWindow)
         {
             NetworkManager = networkManager;
             networkManager.PropertyChanged += myModel_PropertyChanged;
             Instance = this;
+            this.mainWindow = mainWindow;
 
             NetworkManager.showAcceptMessageBox += showAcceptMessageBoxEventHandler;
         }
@@ -105,7 +107,7 @@ namespace ChatApp.ViewModels
             { startServer = value; } 
         }
 
-        public ICommand StopServer
+       /* public ICommand StopServer
         {
             get
             {
@@ -117,7 +119,7 @@ namespace ChatApp.ViewModels
             }
             set
             { startServer = value; }
-        }
+        } */
 
         public ICommand StartClient
         {
@@ -162,7 +164,7 @@ namespace ChatApp.ViewModels
             { */
                 validationMessage = "";
                 GameBoard board = new GameBoard();
-                board.DataContext = this;
+                
                 board.ShowDialog();
             /*}
             else
@@ -181,8 +183,9 @@ namespace ChatApp.ViewModels
             {
 
                 validationMessage = "";
-                ChatWindow chat = new ChatWindow(userName);
-                chat.DataContext = this;
+                
+                ChatWindow chat = new ChatWindow(UserName, mainWindow, NetworkManager);
+                
                 chat.ShowDialog();
                 /* 
                  * GameBoard board = new GameBoard();

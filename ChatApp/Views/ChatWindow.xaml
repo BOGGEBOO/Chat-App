@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatApp.Views"
         mc:Ignorable="d"
-        Title="ChatWindow" Height="450" Width="800">
+        Title="Chat Window" Height="450" Width="800">
     <Grid>
         <StackPanel Width="500" VerticalAlignment="Center">
-            <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding UserName}" FontSize="25" Margin="10"/>
+            <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Username}" FontSize="25" Margin="10"/>
             <Button Content="Stop Server" Command="{Binding StopServer}"/>
         </StackPanel>
 
