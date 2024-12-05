@@ -15,7 +15,7 @@ using System.Net.Sockets;
 
 namespace ChatApp.ViewModels
 {
-    internal class MainWindowViewModel : INotifyPropertyChanged
+    internal class MainWindowViewModel : BaseViewModel
     {
         public static MainWindowViewModel Instance;
         public NetworkManager NetworkManager { get; set; }
@@ -35,7 +35,7 @@ namespace ChatApp.ViewModels
             NetworkManager.showAcceptMessageBox += showAcceptMessageBoxEventHandler;
         }
 
-        private string userName = "Kent";
+        private string userName;
         public string UserName
         {
             get => userName;
@@ -75,23 +75,6 @@ namespace ChatApp.ViewModels
 
             }
         }
-
-        public void StopListening(Views.ConnectionRequest connectionRequest)
-        {
-            NetworkManager.StopListening(connectionRequest);
-        }
-
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
-
         
 
         public ICommand StartServer
@@ -106,20 +89,6 @@ namespace ChatApp.ViewModels
             set 
             { startServer = value; } 
         }
-
-       /* public ICommand StopServer
-        {
-            get
-            {
-                if (startServer == null)
-                {
-                    startServer = new StopServerCommand(this);
-                }
-                return startServer;
-            }
-            set
-            { startServer = value; }
-        } */
 
         public ICommand StartClient
         {
@@ -145,7 +114,6 @@ namespace ChatApp.ViewModels
 
         private string startServerConnection()
         {
-            // bool valid = ValidateFields(out "");
             NetworkManager.Username = userName;
             return NetworkManager.startServer(ipAddress, Int32.Parse(portNumber));
         }
@@ -159,20 +127,12 @@ namespace ChatApp.ViewModels
 
         public void startClientBoard()
         {
-           /* string result = startClientConnection();
-            if (result == "200 OK")
-            { */
-                validationMessage = "";
-                GameBoard board = new GameBoard();
-                
-                board.ShowDialog();
-            /*}
-            else
-            {
-                
-                // MessageBox.Show("Cannot start client connection!");
-                ValidationMessage = result; 
-            }*/
+           
+            validationMessage = "";
+            ChatWindow chat = new ChatWindow(UserName, mainWindow, NetworkManager);
+
+            chat.ShowDialog();
+            
         }
 
         public void startGameBoard()
@@ -187,20 +147,12 @@ namespace ChatApp.ViewModels
                 ChatWindow chat = new ChatWindow(UserName, mainWindow, NetworkManager);
                 
                 chat.ShowDialog();
-                /* 
-                 * GameBoard board = new GameBoard();
-                 * board.DataContext = this;
-                 * board.ShowDialog(); 
-                */
+                
             }
             else
             {
                 ValidationMessage = result;
-                // MessageBox.Show("Cannot start server connection!");
             }
-
-
-
         }
 
         public bool AddContact(string name, TcpClient client)

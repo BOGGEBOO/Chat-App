@@ -9,38 +9,32 @@ using ChatApp.Models;
 using ChatApp.Views;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using ChatApp.ViewModels;
 
 namespace ChatApp.ViewModels
 {
-    public class ChatWindowViewModel : INotifyPropertyChanged
+    public class ChatWindowViewModel : BaseViewModel
     {
-
-        //private ICommand AcceptConnection;
-
         public static ChatWindowViewModel Instance;
 
-        private ICommand stopServer;
+        private ICommand logOut;
         public NetworkManager NetworkManager { get; set; }
 
-        private ChatWindow chat;
-        public ChatWindowViewModel(ChatWindow chat, string uName, NetworkManager networkManager) 
+        private ChatWindow chatWindow;
+
+        
+        
+        public ChatWindowViewModel(ChatWindow chatWindow, string uName, NetworkManager networkManager) 
         {
             System.Diagnostics.Debug.WriteLine(uName);
             this.userName = uName;
             this.NetworkManager = networkManager;
-            this.chat = chat;
+            this.chatWindow = chatWindow;
+            this.chatPartner = networkManager.Sender;
             Instance = this;
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
+        
 
         private string userName;
         public string Username
@@ -51,41 +45,74 @@ namespace ChatApp.ViewModels
                 this.userName = value;
             }
         }
-        public ICommand AcceptConnection
+
+        private string chatPartner;
+        public string ChatPartner
         {
-            get
-            {
-                /*
-                if (AcceptConnection == null)
-                {
-                    AcceptConnection = new AcceptConnectionCommand(this);
-                }
-                */
-                return AcceptConnection;
+            get { return chatPartner; }
+            set 
+            { 
+                chatPartner = value;
+                OnPropertyChanged(chatPartner);
             }
-            set
-            { AcceptConnection = value; }
         }
 
-        public ICommand StopServer
+        private NetworkManager chat;
+        public NetworkManager Chat
+        {
+            get { return chat; }
+            set { chat = value; }
+        }
+
+        private string newMessage;
+        public string NewMessage
+        {
+            get { return newMessage; }
+            set 
+            { 
+                newMessage = value; 
+                OnPropertyChanged(newMessage);
+            }
+        }
+
+        private ICommand sendMessage;
+        public ICommand SendMessage
         {
             get
             {
-                if(stopServer == null)
+                if(sendMessage == null)
                 {
-                    stopServer = new StopServerCommand(this);
+                    Message message = new Message("chat_message", userName, DateTime.Now.ToString(), NewMessage);
+                    sendMessage = new SendMessageCommand(this);
                 }
-                return stopServer;
+                return sendMessage;
+            }
+            set 
+            { 
+                sendMessage = value; 
+            }
+        }
+
+
+        public ICommand LogOut
+        {
+            get
+            {
+                if(logOut == null)
+                {
+                    logOut = new LogOutCommand(this);
+                }
+                return logOut;
             }
             set
             {
-                stopServer = value;
+                logOut = value;
             }
         }
 
         public void Logout()
         {
-            MainWindow main = new MainWindow(chat);
+            MainWindow main = new MainWindow(chatWindow);
             main.ShowDialog();
         }
 

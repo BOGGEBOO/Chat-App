@@ -21,7 +21,7 @@ namespace ChatApp.Views
             this.DataContext = new ChatWindowViewModel(this, userName, networkManager);
         }
 
-        
+       
 
     }
 }

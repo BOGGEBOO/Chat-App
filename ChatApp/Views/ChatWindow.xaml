@@ -7,10 +7,45 @@
         mc:Ignorable="d"
         Title="Chat Window" Height="450" Width="800">
     <Grid>
-        <StackPanel Width="500" VerticalAlignment="Center">
-            <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Username}" FontSize="25" Margin="10"/>
-            <Button Content="Stop Server" Command="{Binding StopServer}"/>
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="4*"/>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel VerticalAlignment="Top">
+            <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Username}" FontSize="25" Margin="5"/>
+            <Button Content="Log out" Command="{Binding LogOut}" />
         </StackPanel>
+        <DockPanel Grid.Column="0" Grid.Row="1" Grid.RowSpan="2">
+            <!-- fyll med andra chatter -->
+        </DockPanel>
+        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="10">
+            <TextBlock Text="{Binding ChatPartner}" Margin="10" FontSize="20"/>
+
+            <ListView Height="180" ItemsSource="{Binding Chat.Conversation.Messages}" Margin="10">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Label Content="{Binding Content}"></Label>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <!-- <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" Name="sv1" Margin="10"> -->
+            <!-- <TextBlock TextWrapping="Wrap" Text="{Binding Chat.Messages}"  Margin="4"  Height="210"/> -->
+            <!-- </ScrollViewer> -->
+
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="1">
+            <TextBox Margin="10" Height="50" Text="{Binding NewMessage, Mode=TwoWay}" TextWrapping="Wrap"/>
+        </StackPanel>
+        <DockPanel Grid.Row="2" Grid.Column="2">
+            <Button Content="Send" Command="{Binding SendMessage}" Margin="10" VerticalAlignment="Center"/>
+        </DockPanel>
 
     </Grid>
 </Window>

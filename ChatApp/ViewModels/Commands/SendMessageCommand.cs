@@ -1,18 +1,19 @@
-﻿using System;
+﻿using ChatApp.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using ChatApp.ViewModels;
 
 namespace ChatApp.ViewModels.Commands
 {
-    internal class StopServerCommand : ICommand
+    internal class SendMessageCommand : ICommand
     {
         public event EventHandler CanExecuteChanged;
         private ChatWindowViewModel parent = null;
-        public StopServerCommand(ChatWindowViewModel parent)
+        private Message message;
+        public SendMessageCommand(ChatWindowViewModel parent)
         {
             this.parent = parent;
         }
@@ -24,9 +25,8 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            parent.NetworkManager.Disconnect();
-            parent.Logout();
+            message = new Message("chat_message", parent.Username, DateTime.Now.ToString(), parent.NewMessage);
+            parent.NetworkManager.sendMessage(message);
         }
-
     }
 }

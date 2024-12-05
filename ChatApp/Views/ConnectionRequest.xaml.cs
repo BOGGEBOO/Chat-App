@@ -32,10 +32,7 @@ namespace ChatApp.Views
             this.Close();
         } 
 
-        private void OnClosed(object sender, EventArgs e)
-        {
-            MainWindowViewModel.Instance.StopListening(this);
-        }
+        
 
         public bool ShowMessageBox(string name)
         {
