@@ -11,12 +11,15 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using ChatApp.ViewModels;
 using System.Collections.ObjectModel;
+using System.Windows.Controls;
 
 namespace ChatApp.ViewModels
 {
     public class ChatWindowViewModel : BaseViewModel
     {
         public static ChatWindowViewModel Instance;
+
+
 
         private ICommand logOut;
         public NetworkManager NetworkManager { get; set; }
@@ -30,6 +33,7 @@ namespace ChatApp.ViewModels
             set { conversation = value; }
         }
 
+
         public ChatWindowViewModel(ChatWindow chatWindow, string uName, NetworkManager networkManager) 
         {
             System.Diagnostics.Debug.WriteLine(uName);
@@ -40,6 +44,8 @@ namespace ChatApp.ViewModels
             Instance = this;
             NetworkManager.ViewModel = this;
             conversation = new ObservableCollection<Message>();
+            
+            //ScrollViewer Scrollan = Scrollan as ScrollViewer;
         }
 
         private string userName;
@@ -80,6 +86,7 @@ namespace ChatApp.ViewModels
                 OnPropertyChanged(newMessage);
             }
         }
+        
 
         private ICommand sendMessage;
         public ICommand SendMessage
@@ -90,6 +97,7 @@ namespace ChatApp.ViewModels
                 {
                     Message message = new Message("chat_message", userName, DateTime.Now.ToString(), NewMessage);
                     sendMessage = new SendMessageCommand(this);
+                    //Scrollan.ScrollToBottom(); 
                 }
                 return sendMessage;
             }
