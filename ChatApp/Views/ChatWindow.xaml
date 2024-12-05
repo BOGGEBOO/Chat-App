@@ -28,13 +28,16 @@
         <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="10">
             <TextBlock Text="{Binding ChatPartner}" Margin="10" FontSize="20"/>
 
-            <ListView Height="180" ItemsSource="{Binding Chat.Conversation.Messages}" Margin="10">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Label Content="{Binding Content}"></Label>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+            <Grid>
+                <ItemsControl ItemsSource="{Binding Conversation}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="whoop"></TextBlock>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+            
             <!-- <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" Name="sv1" Margin="10"> -->
             <!-- <TextBlock TextWrapping="Wrap" Text="{Binding Chat.Messages}"  Margin="4"  Height="210"/> -->
             <!-- </ScrollViewer> -->

@@ -10,6 +10,7 @@ using ChatApp.Views;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using ChatApp.ViewModels;
+using System.Collections.ObjectModel;
 
 namespace ChatApp.ViewModels
 {
@@ -22,8 +23,13 @@ namespace ChatApp.ViewModels
 
         private ChatWindow chatWindow;
 
-        
-        
+        private ObservableCollection<Message> conversation;
+        public ObservableCollection<Message> Conversation
+        {
+            get { return conversation; }
+            set { conversation = value; }
+        }
+
         public ChatWindowViewModel(ChatWindow chatWindow, string uName, NetworkManager networkManager) 
         {
             System.Diagnostics.Debug.WriteLine(uName);
@@ -32,9 +38,9 @@ namespace ChatApp.ViewModels
             this.chatWindow = chatWindow;
             this.chatPartner = networkManager.Sender;
             Instance = this;
+            NetworkManager.ViewModel = this;
+            conversation = new ObservableCollection<Message>();
         }
-
-        
 
         private string userName;
         public string Username

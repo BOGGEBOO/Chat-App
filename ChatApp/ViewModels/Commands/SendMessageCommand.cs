@@ -27,6 +27,7 @@ namespace ChatApp.ViewModels.Commands
         {
             message = new Message("chat_message", parent.Username, DateTime.Now.ToString(), parent.NewMessage);
             parent.NetworkManager.sendMessage(message);
+            parent.Conversation.Add(message);        
         }
     }
 }

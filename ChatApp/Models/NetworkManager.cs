@@ -17,6 +17,7 @@ using System.Windows;
 using Microsoft.VisualBasic;
 using System.Media;
 using System.Reflection.PortableExecutable;
+using System.Collections.ObjectModel;
 
 namespace ChatApp.Models
 {
@@ -31,6 +32,12 @@ namespace ChatApp.Models
         public bool connectionAccepted;
         private bool connected;
         private string sender;
+        private ChatWindowViewModel viewModel;
+        public ChatWindowViewModel ViewModel
+        {
+            get { return viewModel; }
+            set { viewModel = value; }
+        }
         public string Sender
         { 
             get { return sender; } 
@@ -43,12 +50,7 @@ namespace ChatApp.Models
             set { username = value; }
         }
 
-        private Conversation conversation;
-        public Conversation Conversation
-        {
-            get { return conversation; }
-            set { conversation = value; }
-        }
+        
 
         public event EventHandler<MessageRecievedEventArgs> messageRecieved;
         public event EventHandler<ShowAcceptMessageBoxEventArgs> showAcceptMessageBox;
@@ -71,7 +73,7 @@ namespace ChatApp.Models
 
         public string startServer(string host, int port)
         {
-            conversation = new Conversation();
+           
             try
             {
                 Task.Factory.StartNew(async () =>
@@ -192,9 +194,11 @@ namespace ChatApp.Models
             {
                 if (client.Connected)
                 {
-                    
-                        
-                    conversation.add(message);
+
+                    /*if(viewModel != null)
+                    {
+                        viewModel.Conversation.Add(message);
+                    }*/
                     
                     string jsonS = JsonSerializer.Serialize<Message>(message);
 
@@ -221,14 +225,28 @@ namespace ChatApp.Models
                         if (data != null)
                         {
                             Message message = JsonSerializer.Deserialize<Message>(data);
-                            messageRecieved?.Invoke(this, new MessageRecievedEventArgs(message));
-                            
+                            if (message.Type == "disconnect")
+                            {
+                                MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
+                                writer.Close();
+                                reader.Close();
+                                client.Close();
+                                connected = false;
+                                return;
+                            }
+                            else if (message.Type == "chat_message")
+                            {
+                                App.Current.Dispatcher.Invoke(() => { viewModel.Conversation.Add(message); });
+                                
+                            }
+
                         }
 
                     }
                 }
                 catch (Exception e)
                 {
+                    System.Diagnostics.Debug.WriteLine(e.ToString());
                     MessageBox.Show("Your frien has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
                 }
             }
@@ -236,8 +254,8 @@ namespace ChatApp.Models
 
         public string startClient(string host, int port)
         {
+            
             string errorMessage = "Error connecting to server. Check your information. ";
-            conversation = new Conversation();
             try
             {
                 client = new TcpClient(); //inte ha host, port här, skapar en connection då...
@@ -332,11 +350,11 @@ namespace ChatApp.Models
             else if (args.message.Type == "chat_message")
             {
 
-                Conversation.add(args.message);
+                viewModel.Conversation.Add(args.message);
             }           
 
-            Action<Message> addMethod = conversation.add;
-            Application.Current.Dispatcher.BeginInvoke(addMethod, args.message);
+            //Action<Message> addMethod = conversation.Add;
+            //Application.Current.Dispatcher.BeginInvoke(addMethod, args.message);
         }
 
     }
