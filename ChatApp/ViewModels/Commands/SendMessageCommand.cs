@@ -11,9 +11,9 @@ namespace ChatApp.ViewModels.Commands
     internal class SendMessageCommand : ICommand
     {
         public event EventHandler CanExecuteChanged;
-        private ChatWindowViewModel parent = null;
+        private tempViewModel parent = null;
         private Message message;
-        public SendMessageCommand(ChatWindowViewModel parent)
+        public SendMessageCommand(tempViewModel parent)
         {
             this.parent = parent;
         }
@@ -25,7 +25,7 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            message = new Message("chat_message", parent.Username, DateTime.Now.ToString(), parent.NewMessage);
+            message = new Message("chat_message", parent.UserName, DateTime.Now.ToString(), parent.NewMessage);
             parent.NetworkManager.sendMessage(message);
             parent.Conversation.Add(message);        
         }

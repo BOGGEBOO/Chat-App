@@ -250,47 +250,49 @@ namespace ChatApp.Models
             }
         }
 
-        public string startClient(string host, int port)
+        public void startClient(string host, int port)
         {
-
-            string errorMessage = "Error connecting to server. Check your information. ";
-            try
+            Task.Factory.StartNew(async () =>
             {
-                client = new TcpClient(); //inte ha host, port här, skapar en connection då...
-
-                while (!client.Connected)
+                string errorMessage = "Error connecting to server. Check your information. ";
+                try
                 {
-                    client.Connect(host, port);
+                    client = new TcpClient(); //inte ha host, port här, skapar en connection då...
+
+                    while (!client.Connected)
+                    {
+                        client.Connect(host, port);
+                    }
+
+                    writer = new StreamWriter(client.GetStream());
+                    reader = new StreamReader(client.GetStream());
+
+                    Message connection_request = new Message("connection", username, DateTime.Now.ToString());
+                    sendMessage(connection_request);
+                    Message response = receiveMessage();
+
+                    if (response.Content == "DENIED" && response.Type == "connection")
+                    {
+                        writer.Close();
+                        reader.Close();
+                        client.Close();
+                        return response.Content;
+                    }
                 }
-
-                writer = new StreamWriter(client.GetStream());
-                reader = new StreamReader(client.GetStream());
-
-                Message connection_request = new Message("connection", username, DateTime.Now.ToString());
-                sendMessage(connection_request);
-                Message response = receiveMessage();
-
-                if (response.Content == "DENIED" && response.Type == "connection")
+                catch (SocketException ex)
                 {
-                    writer.Close();
-                    reader.Close();
-                    client.Close();
-                    return response.Content;
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
+                    return "Error when connecting";
+
                 }
-            }
-            catch (SocketException ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-                return "Error when connecting";
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
 
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-
-                return errorMessage;
-            }
-            return "200 OK";
+                    return errorMessage;
+                }
+                return "200 OK";
+            });
         }
 
 

@@ -13,8 +13,8 @@ namespace ChatApp.ViewModels.Commands
     {
 
         public event EventHandler CanExecuteChanged;
-        private MainWindowViewModel parent = null;
-        public StartServerCommand(MainWindowViewModel parent) 
+        private tempViewModel parent = null;
+        public StartServerCommand(tempViewModel parent) 
         {
             this.parent = parent;
         }
@@ -26,13 +26,23 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            if(parent.ValidateFields(out string errorMessage))
+            if (parent.ValidateFields(out string errorMessage))
             {
-                parent.startGameBoard();
+                string isSuccessful = parent.NetworkManager.startServer(parent.IpAddress, Int32.Parse(parent.PortNumber));
+                if(isSuccessful == "200 OK")
+                {
+                    parent.ValidationMessage = "";
+                    //parent.startGameBoard();
+                }
+                else
+                {
+                    parent.ValidationMessage += isSuccessful;
+                }
+                
             }
             else
             {
-                parent.ValidationMessage = errorMessage;
+                parent.ValidationMessage += errorMessage;
             }
         }
     }

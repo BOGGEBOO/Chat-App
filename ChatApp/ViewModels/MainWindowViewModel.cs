@@ -17,6 +17,7 @@ namespace ChatApp.ViewModels
 {
     internal class MainWindowViewModel : BaseViewModel
     {
+        /*
         public static MainWindowViewModel Instance;
         public NetworkManager NetworkManager { get; set; }
         private ICommand startServer;
@@ -194,6 +195,7 @@ namespace ChatApp.ViewModels
                 NetworkManager.connectionAccepted = false;
             }
         }
+        */
     }
 }
 

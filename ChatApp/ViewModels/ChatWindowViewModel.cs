@@ -18,7 +18,7 @@ namespace ChatApp.ViewModels
 {
     public class ChatWindowViewModel : BaseViewModel
     {
-        public static ChatWindowViewModel Instance;
+       /* public static ChatWindowViewModel Instance;
 
 
 
@@ -152,6 +152,6 @@ namespace ChatApp.ViewModels
         }
 
 
-
+        */
     }
 }

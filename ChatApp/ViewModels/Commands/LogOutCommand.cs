@@ -11,8 +11,8 @@ namespace ChatApp.ViewModels.Commands
     internal class LogOutCommand : ICommand
     {
         public event EventHandler CanExecuteChanged;
-        private ChatWindowViewModel parent = null;
-        public LogOutCommand(ChatWindowViewModel parent)
+        private tempViewModel parent = null;
+        public LogOutCommand(tempViewModel parent)
         {
             this.parent = parent;
         }
@@ -25,7 +25,8 @@ namespace ChatApp.ViewModels.Commands
         public void Execute(object parameter)
         {
             parent.NetworkManager.Disconnect();
-            parent.Logout();
+            parent.ActiveConnection = false;
+            //parent.Logout();
         }
 
     }

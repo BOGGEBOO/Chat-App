@@ -8,6 +8,9 @@
     <Compile Update="Views\ConnectionRequest.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\tempWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\ChatWindow.xaml">
@@ -17,6 +20,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="Views\GameBoard.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Views\tempWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

@@ -10,9 +10,9 @@ namespace ChatApp.ViewModels.Commands
     internal class StartClientCommand : ICommand
     {
         public event EventHandler CanExecuteChanged;
-        private MainWindowViewModel parent = null;
+        private tempViewModel parent = null;
         // private readonly MainWindowViewModel _viewModel;
-        public StartClientCommand(MainWindowViewModel parent)
+        public StartClientCommand(tempViewModel parent)
         {
             this.parent = parent;
         }
@@ -31,7 +31,8 @@ namespace ChatApp.ViewModels.Commands
                 {
                     // öppna chatfönster
                     parent.ValidationMessage = "";
-                    parent.startClientBoard();
+                    //parent.startClientBoard();
+                    parent.ActiveConnection = true;
                 } 
                 else if(isSuccessfull == "DENIED")
                 {

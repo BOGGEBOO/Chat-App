@@ -15,13 +15,13 @@ namespace ChatApp.Views
         {
             InitializeComponent();
             
-            this.DataContext = new MainWindowViewModel(new NetworkManager(), this);
+           // this.DataContext = new MainWindowViewModel(new NetworkManager(), this);
         }
         public MainWindow(ChatWindow chat)
         {
             InitializeComponent();
             chat.Close();
-            this.DataContext = new MainWindowViewModel(new NetworkManager(), this);
+           // this.DataContext = new MainWindowViewModel(new NetworkManager(), this);
         }
     }
 }

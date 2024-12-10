@@ -18,7 +18,7 @@ namespace ChatApp.Views
             
             mainWindow.Close();
 
-            this.DataContext = new ChatWindowViewModel(this, userName, networkManager);
+           //  this.DataContext = new ChatWindowViewModel(this, userName, networkManager);
         }
 
        
