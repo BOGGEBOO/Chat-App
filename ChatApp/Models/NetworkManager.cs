@@ -18,6 +18,7 @@ using Microsoft.VisualBasic;
 using System.Media;
 using System.Reflection.PortableExecutable;
 using System.Collections.ObjectModel;
+using System.Windows.Navigation;
 
 namespace ChatApp.Models
 {
@@ -32,16 +33,11 @@ namespace ChatApp.Models
         public bool connectionAccepted;
         private bool connected;
         private string sender;
-        private ChatWindowViewModel viewModel;
-        public ChatWindowViewModel ViewModel
-        {
-            get { return viewModel; }
-            set { viewModel = value; }
-        }
+        
         public string Sender
-        { 
-            get { return sender; } 
-            set { sender = value; } 
+        {
+            get { return sender; }
+            set { sender = value; }
         }
         private string username;
         public string Username
@@ -50,7 +46,12 @@ namespace ChatApp.Models
             set { username = value; }
         }
 
-        
+        private Message lastMessage;
+        public Message LastMessage
+        {
+            get { return lastMessage; }
+            set { lastMessage = value; }
+        }
 
         public event EventHandler<MessageRecievedEventArgs> messageRecieved;
         public event EventHandler<ShowAcceptMessageBoxEventArgs> showAcceptMessageBox;
@@ -59,21 +60,17 @@ namespace ChatApp.Models
         private void OnPropertyChanged(string propertyName = "")
         {
             PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            /*if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-
-            } */
+            
         }
 
-        public NetworkManager()
+        private void NotifyMessageChanged(string propertyName)
         {
-            messageRecieved += messageRecievedHandler;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public string startServer(string host, int port)
         {
-           
+
             try
             {
                 Task.Factory.StartNew(async () =>
@@ -86,7 +83,7 @@ namespace ChatApp.Models
                         {
                             server.Start();
                             System.Diagnostics.Debug.WriteLine("Start listening...");
-                        
+
                             client = server.AcceptTcpClient();
 
                             reader = new StreamReader(client.GetStream());
@@ -103,7 +100,7 @@ namespace ChatApp.Models
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine(ex.ToString());
-                    }                
+                    }
                 });
                 return "200 OK";
             }
@@ -133,11 +130,11 @@ namespace ChatApp.Models
             {
                 string data = reader.ReadLine();
 
-                if(data != null)
+                if (data != null)
                 {
                     Message message = JsonSerializer.Deserialize<Message>(data);
-                    
-                    if(message.Type == "connection")
+
+                    if (message.Type == "connection")
                     {
                         sender = message.Sender;
                         break;
@@ -146,8 +143,9 @@ namespace ChatApp.Models
             }
             server.Stop();
             showAcceptMessageBox?.Invoke(null, new ShowAcceptMessageBoxEventArgs("Chat with " + sender + "?"));
-            while (true) { 
-                if(connectionAccepted)
+            while (true)
+            {
+                if (connectionAccepted)
                 {
                     Message message = new Message("connection", username, DateTime.Now.ToString(), "ACCEPTED");
                     sendMessage(message);
@@ -172,10 +170,10 @@ namespace ChatApp.Models
                 }
             }
         }
-        
+
         public void Disconnect()
         {
-            if(client != null && client.Connected)
+            if (client != null && client.Connected)
             {
                 connected = false;
                 Message message = new Message("disconnect", username, DateTime.Now.ToString());
@@ -194,12 +192,6 @@ namespace ChatApp.Models
             {
                 if (client.Connected)
                 {
-
-                    /*if(viewModel != null)
-                    {
-                        viewModel.Conversation.Add(message);
-                    }*/
-                    
                     string jsonS = JsonSerializer.Serialize<Message>(message);
 
                     writer.WriteLine(jsonS);
@@ -214,7 +206,7 @@ namespace ChatApp.Models
 
         public void listen()
         {
-            while(client.Connected)
+            while (client.Connected)
             {
                 try
                 {
@@ -227,7 +219,9 @@ namespace ChatApp.Models
                             Message message = JsonSerializer.Deserialize<Message>(data);
                             if (message.Type == "disconnect")
                             {
-                                MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
+                                lastMessage = message;
+                                NotifyMessageChanged(message.Type);
+                                
                                 writer.Close();
                                 reader.Close();
                                 client.Close();
@@ -236,8 +230,9 @@ namespace ChatApp.Models
                             }
                             else if (message.Type == "chat_message")
                             {
-                                App.Current.Dispatcher.Invoke(() => { viewModel.Conversation.Add(message); });
-                                
+                                lastMessage = message;
+                                App.Current.Dispatcher.Invoke(() => { NotifyMessageChanged(message.Type); });
+
                             }
 
                         }
@@ -247,55 +242,58 @@ namespace ChatApp.Models
                 catch (Exception e)
                 {
                     System.Diagnostics.Debug.WriteLine(e.ToString());
-                    MessageBox.Show("Your frien has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
+                    Message message = new Message("dramatic_disconnect", username, DateTime.Now.ToString());
+                    lastMessage = message;
+                    App.Current.Dispatcher.Invoke(() => { NotifyMessageChanged(message.Type); });
+                    
                 }
             }
         }
 
         public string startClient(string host, int port)
         {
-            
+
             string errorMessage = "Error connecting to server. Check your information. ";
             try
             {
                 client = new TcpClient(); //inte ha host, port här, skapar en connection då...
 
-                while(!client.Connected)
+                while (!client.Connected)
                 {
                     client.Connect(host, port);
                 }
 
                 writer = new StreamWriter(client.GetStream());
                 reader = new StreamReader(client.GetStream());
-                
+
                 Message connection_request = new Message("connection", username, DateTime.Now.ToString());
                 sendMessage(connection_request);
                 Message response = receiveMessage();
 
-                if(response.Content == "DENIED" && response.Type == "connection")
+                if (response.Content == "DENIED" && response.Type == "connection")
                 {
                     writer.Close();
                     reader.Close();
                     client.Close();
                     return response.Content;
                 }
-            } 
+            }
             catch (SocketException ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
                 return "Error when connecting";
-               
+
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
-                
+
                 return errorMessage;
             }
             return "200 OK";
         }
 
-       
+
         public Message receiveMessage()
         {
             while (true)
@@ -309,9 +307,9 @@ namespace ChatApp.Models
                     if (message.Type == "connection")
                     {
                         sender = message.Sender;
-                        if(message.Content == "ACCEPTED")
+                        if (message.Content == "ACCEPTED")
                         {
-                            
+
                             thread = new Thread(listen);
                             thread.IsBackground = true;
                             thread.Start();
@@ -334,49 +332,26 @@ namespace ChatApp.Models
             return new Message("", "", "");
         }
 
+        }
+        public class MessageRecievedEventArgs : EventArgs
+        {
+            public MessageRecievedEventArgs(Message m)
+            {
+                message = m;
+            }
+
+            public Message message { get; set; }
+        }
+
+        public class ShowAcceptMessageBoxEventArgs : EventArgs
+        {
+            public ShowAcceptMessageBoxEventArgs(string s)
+            {
+                text = s;
+            }
+
+            public string text { get; set; }
+        }
 
     
-        void messageRecievedHandler(object sender, MessageRecievedEventArgs args)
-        {
-            if (args.message.Type == "disconnect")
-            {
-                MessageBox.Show(args.message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
-                writer.Close();
-                reader.Close();
-                client.Close();
-                connected = false;
-                return;
-            }
-            else if (args.message.Type == "chat_message")
-            {
-
-                viewModel.Conversation.Add(args.message);
-            }           
-
-            //Action<Message> addMethod = conversation.Add;
-            //Application.Current.Dispatcher.BeginInvoke(addMethod, args.message);
-        }
-
-    }
-    public class MessageRecievedEventArgs : EventArgs
-    {
-        public MessageRecievedEventArgs(Message m)
-        {
-            message = m;
-        }
-
-        public Message message { get; set; }
-    }
-
-    public class ShowAcceptMessageBoxEventArgs : EventArgs
-    {
-        public ShowAcceptMessageBoxEventArgs(string s)
-        {
-            text = s;
-        }
-
-        public string text { get; set; }
-    }
-
-
 }

@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using ChatApp.ViewModels;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
+using System.Windows;
 
 namespace ChatApp.ViewModels
 {
@@ -42,10 +43,10 @@ namespace ChatApp.ViewModels
             this.chatWindow = chatWindow;
             this.chatPartner = networkManager.Sender;
             Instance = this;
-            NetworkManager.ViewModel = this;
-            conversation = new ObservableCollection<Message>();
             
-            //ScrollViewer Scrollan = Scrollan as ScrollViewer;
+            conversation = new ObservableCollection<Message>();
+            NetworkManager.PropertyChanged += NetworkManager_PropertyChanged;
+            
         }
 
         private string userName;
@@ -66,6 +67,24 @@ namespace ChatApp.ViewModels
             { 
                 chatPartner = value;
                 OnPropertyChanged(chatPartner);
+            }
+        }
+
+        private void NetworkManager_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName.Equals("chat_message"))
+            {
+                Conversation.Add(NetworkManager.LastMessage);
+            }
+            else if (e.PropertyName.Equals("disconnect"))
+            {
+                Message message = NetworkManager.LastMessage;
+                MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
+            }
+            else if(e.PropertyName.Equals("dramatic_disconnect"))
+            {
+                Message message = NetworkManager.LastMessage;
+                MessageBox.Show(message.Sender + " has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
             }
         }
 
@@ -96,7 +115,9 @@ namespace ChatApp.ViewModels
                 if(sendMessage == null)
                 {
                     Message message = new Message("chat_message", userName, DateTime.Now.ToString(), NewMessage);
+                    //Conversation.Add(message);
                     sendMessage = new SendMessageCommand(this);
+                    
                     //Scrollan.ScrollToBottom(); 
                 }
                 return sendMessage;
