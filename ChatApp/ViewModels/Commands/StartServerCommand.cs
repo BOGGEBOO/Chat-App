@@ -26,6 +26,9 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
+            
+            //parent.xxxx()
+            //xxx()
             if (parent.ValidateFields(out string errorMessage))
             {
                 string isSuccessful = parent.NetworkManager.startServer(parent.IpAddress, Int32.Parse(parent.PortNumber));
