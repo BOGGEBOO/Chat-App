@@ -30,9 +30,40 @@
             <Button Content="Request Connection" Command="{Binding StartClient}" Width="100" FontSize="10" HorizontalAlignment="Left" Margin="3, 0, 0, 5"/>
             <Button Content="Disconnect" Command="{Binding Disconnect}" Width="100" FontSize="10" HorizontalAlignment="Left" Margin="3, 0, 0, 5" IsEnabled="{Binding ActiveConnection}"/>
         </StackPanel>
-        <DockPanel Grid.Column="0" Grid.Row="1" Grid.RowSpan="2">
-            <!-- fyll med andra chatter -->
-        </DockPanel>
+        <StackPanel Grid.Column="0" Grid.Row="2" Grid.RowSpan="2">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBox Text="{Binding SearchString}" Grid.Row="0" Grid.Column="0" Width="120"/>
+                <Button Content="Search" Command="{Binding Search}" Width="100" Grid.Row="0"  Grid.Column="1"/>
+            </Grid>
+            
+            <ListView Height="170" ScrollViewer.CanContentScroll="False"  >
+                <ItemsControl ItemsSource="{Binding ShownContacts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ListViewItem>
+                                <ListViewItem.Content>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0}: {1}">
+                                                <Binding Path="Name" />
+                                                <Binding Path="LastActive" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </ListViewItem.Content>
+                            </ListViewItem>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ListView>
+        </StackPanel>
         <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"  Grid.RowSpan="3" Margin="10" Name="Root">
             <TextBlock Text="Chat" Margin="10" FontSize="10"/>
             <ScrollViewer Height="300" VerticalScrollBarVisibility="Visible" x:Name="Scrollan" >
@@ -60,7 +91,7 @@
             <TextBox Height="30" Text="{Binding NewMessage, Mode=TwoWay}" TextWrapping="Wrap" VerticalAlignment="Center"/>
         </DockPanel>
         <DockPanel Grid.Row="3" Grid.Column="2">
-            <Button Content="Send" Command="{Binding SendMessage}" Margin="10" VerticalAlignment="Center"/>
+            <Button Content="Send" Command="{Binding SendMessage}" Margin="10" VerticalAlignment="Center" IsEnabled="{Binding ActiveConnection}"/>
         </DockPanel>
 
     </Grid>

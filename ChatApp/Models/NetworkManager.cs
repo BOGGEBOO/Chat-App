@@ -66,12 +66,17 @@ namespace ChatApp.Models
             
         }
 
+        private void NotifyStatusChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         private void NotifyMessageChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public string startServer(string host, int port)
+        public void startServer(string host, int port)
         {
 
             try
@@ -101,38 +106,55 @@ namespace ChatApp.Models
 
                         }
                     }
+                    catch (SocketException ex)
+                    {
+                        if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                        {
+                            NotifyStatusChanged("busy_adress");
+                            //return "The address is already in use.";
+                        }
+                        else
+                        {
+                            NotifyStatusChanged("no_start");
+                            System.Diagnostics.Debug.WriteLine(ex.ToString());
+                        }
+                    }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine(ex.ToString());
+                        NotifyStatusChanged("no_start");
                     }
                 });
-                return "200 OK";
+                //return "200 OK";
             }
             catch (SocketException ex)
             {
                 if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
                 {
-                    return "The address is already in use.";
+                    NotifyStatusChanged("busy_adress");
+                    //return "The address is already in use.";
                 }
                 else
                 {
-                    return "Error starting server";
+                    NotifyStatusChanged("no_start");
+                    //return "Error starting server";
                 }
             }
             catch (Exception e)
             {
-                return "Error starting server";
+                NotifyStatusChanged("no_start");
+                //return "Error starting server";
             }
         }
 
-        public string startClient(string host, int port)
+        public void startClient(string host, int port)
         {
             try
             {
+               
                 Task.Factory.StartNew(async () =>
                 {
                     connected = true;
-                    string errorMessage = "Error connecting to server. Check your information. ";
+                    
                     try
                     {
                         client = new TcpClient(); //inte ha host, port här, skapar en connection då...
@@ -146,21 +168,28 @@ namespace ChatApp.Models
                         writer = new StreamWriter(client.GetStream());
                         reader = new StreamReader(client.GetStream());
 
-                        Message connection_request = new Message("connection_request", username, DateTime.Now.ToString());
+                        Message connection_request = new Message("connection_request", username, DateTime.Now.ToString("g"));
                         sendMessage(connection_request);
+                    }
+                    catch(SocketException ex)
+                    {
+                        NotifyStatusChanged("no_listener");
+                        
                     }
                     catch (Exception ex)
                     {
+                        NotifyStatusChanged("connection_error");
                         System.Diagnostics.Debug.WriteLine(ex.ToString());
-
+                       
                     }
                 });
-                return "200 OK";
+                
+                
             }
             catch (Exception e)
             {
                 System.Diagnostics.Debug.WriteLine(e.ToString());
-                return "Error when connecting. Please check your information and try again";
+                
             }
         }
 
@@ -199,7 +228,7 @@ namespace ChatApp.Models
                 }
                 catch (Exception e)
                 {
-                    Message message = new Message("dramatic_disconnect", sender, DateTime.Now.ToString());
+                    Message message = new Message("dramatic_disconnect", sender, DateTime.Now.ToString("g"));
                     lastMessage = message;
                     App.Current.Dispatcher.Invoke(() => { NotifyMessageChanged(message.Type); });
                     
@@ -212,7 +241,7 @@ namespace ChatApp.Models
             if (client != null && client.Connected)
             {
                 connected = false;
-                Message message = new Message("disconnect", username, DateTime.Now.ToString());
+                Message message = new Message("disconnect", username, DateTime.Now.ToString("g"));
                 sendMessage(message);
 
                 Close();

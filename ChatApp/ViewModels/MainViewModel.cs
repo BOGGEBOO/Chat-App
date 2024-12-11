@@ -1,8 +1,10 @@
 ﻿using ChatApp.Models;
 using ChatApp.ViewModels.Commands;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Input;
 
 namespace ChatApp.ViewModels
@@ -10,14 +12,18 @@ namespace ChatApp.ViewModels
     internal class MainViewModel : BaseViewModel
     {
 
-        public MainViewModel(NetworkManager NetworkManager)
+        public MainViewModel(NetworkManager networkManager, HistoryManager historyManager)
         {
-            this.NetworkManager = NetworkManager;
-            NetworkManager.PropertyChanged += NetworkManager_PropertyChanged;
+            this.networkManager = networkManager;
+            networkManager.PropertyChanged += networkManager_PropertyChanged;
+            networkManager.PropertyChanged += networkManager_StatusPropertyChanged;
+            this.historyManager = historyManager;
             this.conversation = new ObservableCollection<Message>();
         }
 
-        public NetworkManager NetworkManager;
+        private NetworkManager networkManager;
+
+        private HistoryManager historyManager;
 
         private ObservableCollection<Message> conversation;
         public ObservableCollection<Message> Conversation
@@ -26,13 +32,25 @@ namespace ChatApp.ViewModels
             set { conversation = value; }
         }
 
+        private List<Contact> contacts;
+
+        private ObservableCollection<Contact> shownContacts;
+        public ObservableCollection<Contact> ShownContacts
+        {
+            get { return shownContacts; }
+            set { shownContacts = value; }
+
+        }
+
+
+
         private string userName = "";
         public string UserName
         {
             get => userName;
             set
             {
-                NetworkManager.Username = value;
+                networkManager.Username = value;
                 userName = value;
             }
         }
@@ -77,6 +95,13 @@ namespace ChatApp.ViewModels
             }
         }
 
+        private string searchString;
+        public string SearchString
+        {
+            get => searchString;
+            set => searchString = value;
+        }
+
         private bool activeConnection = false;
         public bool ActiveConnection
         {
@@ -95,7 +120,7 @@ namespace ChatApp.ViewModels
             {
                 if (startServer == null)
                 {
-                    NetworkManager.Username = UserName;
+                    networkManager.Username = UserName;
                     startServer = new StartServerCommand(this);
                 }
                 return startServer;
@@ -111,7 +136,7 @@ namespace ChatApp.ViewModels
             {
                 if (startClient == null)
                 {
-                    NetworkManager.Username = UserName;
+                    networkManager.Username = UserName;
                     startClient = new StartClientCommand(this);
                 }
                 return startClient;
@@ -139,9 +164,13 @@ namespace ChatApp.ViewModels
 
         public void Disconnecting()
         {
-            NetworkManager.Disconnect();
+            contacts.Add(new Contact(networkManager.Sender, DateTime.Now.ToString(), new List<Message>(Conversation)));
+            ShownContacts = new ObservableCollection<Contact>(contacts);
+            WriteHistory();
+            networkManager.Disconnect();
             ActiveConnection = false;
-            NetworkManager.Connected = false;
+            networkManager.Connected = false;
+            Conversation.Clear();
         }
 
         private ICommand sendMessage;
@@ -151,7 +180,7 @@ namespace ChatApp.ViewModels
             {
                 if (sendMessage == null)
                 {
-                    Message message = new Message("chat_message", userName, DateTime.Now.ToString(), NewMessage);
+                    Message message = new Message("chat_message", userName, DateTime.Now.ToString("g"), NewMessage);
                     sendMessage = new SendMessageCommand(this);
                 }
                 return sendMessage;
@@ -164,24 +193,43 @@ namespace ChatApp.ViewModels
 
         public void MessageSend()
         {
-            Message message = new Message("chat_message", UserName, DateTime.Now.ToString(), NewMessage);
-            NetworkManager.sendMessage(message);
+            Message message = new Message("chat_message", UserName, DateTime.Now.ToString("g"), NewMessage);
+            networkManager.sendMessage(message);
             Conversation.Add(message);
+        }
+
+        private ICommand search;
+        public ICommand Search
+        {
+            get 
+            { 
+                if(search == null)
+                {
+                    search = new SearchCommand(this);
+                }
+                return search; 
+            }
+            set 
+            {
+                search = value; 
+            }
+        }
+
+        public void SearchContacts()
+        {
+            List<Contact> holder = historyManager.Search(searchString, contacts);
+            ShownContacts = new ObservableCollection<Contact>(holder);
+            OnPropertyChanged(nameof(ShownContacts));
         }
 
         public void ServerStart()
         {
             if (ValidateFields(out string errorMessage))
             {
-                string isSuccessful = NetworkManager.startServer(IpAddress, Int32.Parse(PortNumber));
-                if (isSuccessful == "200 OK")
-                {
-                    ValidationMessage = "";
-                }
-                else
-                {
-                    ValidationMessage += isSuccessful;
-                }
+                networkManager.startServer(IpAddress, Int32.Parse(PortNumber));
+                contacts = historyManager.Read(userName);
+                ShownContacts = new ObservableCollection<Contact>(contacts);
+                OnPropertyChanged(nameof(ShownContacts));
             }
             else
             {
@@ -192,15 +240,10 @@ namespace ChatApp.ViewModels
         {
             if (ValidateFields(out string errorMessage))
             {
-                string isSuccessfull = NetworkManager.startClient(IpAddress, Int32.Parse(PortNumber));
-                if (isSuccessfull == "200 OK")
-                {
-                    ValidationMessage = "";
-                }
-                else
-                {
-                    ValidationMessage = isSuccessfull;
-                }
+                networkManager.startClient(IpAddress, Int32.Parse(PortNumber));
+                contacts = historyManager.Read(userName);
+                ShownContacts = new ObservableCollection<Contact>(contacts);
+                OnPropertyChanged(nameof(ShownContacts));
             }
             else
             {
@@ -229,7 +272,27 @@ namespace ChatApp.ViewModels
             return string.IsNullOrEmpty(errorMessage);
         }
 
-        private void NetworkManager_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void networkManager_StatusPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if(e.PropertyName.Equals("no_listener"))
+            {
+                ValidationMessage = "No one is listening to this port/IP adress";
+            }
+            else if(e.PropertyName.Equals("busy_adress"))
+            {
+                ValidationMessage = "This adress is already in use";
+            }
+            else if(e.PropertyName.Equals("no_start"))
+            {
+                ValidationMessage = "Error starting server. Please check your information or try again later.";
+            }
+            else if(e.PropertyName.Equals("connection_error"))
+            {
+                ValidationMessage = "Error when connecting. Check your information and try again.";
+            }
+        }
+
+        private void networkManager_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName.Equals("connection_request"))
             {
@@ -241,62 +304,81 @@ namespace ChatApp.ViewModels
             }
             else if (e.PropertyName.Equals("chat_message"))
             {
-                Conversation.Add(NetworkManager.LastMessage);
+                Conversation.Add(networkManager.LastMessage);
             }
             else if (e.PropertyName.Equals("disconnect"))
             {
                 ActiveConnection = false;
-                Message message = NetworkManager.LastMessage;
+                WriteHistory();
+                Message message = networkManager.LastMessage;
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
             }
             else if (e.PropertyName.Equals("dramatic_disconnect"))
             {
                 ActiveConnection = false;
-                Message message = NetworkManager.LastMessage;
-                if (!NetworkManager.Connected)
+                Message message = networkManager.LastMessage;
+                if (!networkManager.Connected)
                 {
                     return;
                 }
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
+                WriteHistory();
             }
         }
 
         private void handleConnectionRequest()
         {
-            Message message = NetworkManager.LastMessage;
-            Message response = new Message("connection_response", userName, DateTime.Now.ToString());
+            Message message = networkManager.LastMessage;
+            Message response = new Message("connection_response", userName, DateTime.Now.ToString("g"));
             if (MessageBox.Show("Chat with " + message.Sender + "?", "Connect with this user? ", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 ActiveConnection = true;
-                NetworkManager.ConnectionAccepted = true;
+                networkManager.ConnectionAccepted = true;
                 response.Content = "ACCEPTED";
-                NetworkManager.Sender = message.Sender;
+                networkManager.sendMessage(response);
+                networkManager.Sender = message.Sender;
+                Message connectionMessage = new Message("chat_message", "System", DateTime.Now.ToString("g"), "You are now chatting with " + message.Sender);
+                Conversation.Add(connectionMessage);
             }
             else
             {
-                NetworkManager.ConnectionAccepted = false;
-                NetworkManager.Disconnect();
+                networkManager.ConnectionAccepted = false;
                 response.Content = "DENIED";
+                networkManager.sendMessage(response);
+                networkManager.Close();
             }
-            NetworkManager.sendMessage(response);
         }
 
         private void handleConnectionResponse()
         {
-            Message message = NetworkManager.LastMessage;
+            Message message = networkManager.LastMessage;
             if (message.Content == "ACCEPTED")
             {
-                NetworkManager.Sender = message.Sender;
+                networkManager.Sender = message.Sender;
                 ValidationMessage = "";
                 ActiveConnection = true;
+                Message connectionMessage = new Message("chat_message", "System", DateTime.Now.ToString("g"), "You are now chatting with " + message.Sender);
+                Conversation.Add(connectionMessage);
             }
             else if (message.Content == "DENIED")
             {
                 ValidationMessage = "Server denied connection";
-                NetworkManager.Close();
+                networkManager.Close();
                 ActiveConnection = false;
             }
         }
 
+        private void WriteHistory()
+        {
+            historyManager.Write(contacts, userName);
+        }
+
+        void OnProcessExit(object sender, EventArgs e)
+        {
+            WriteHistory();
+        }
+
+
     }
 }
+

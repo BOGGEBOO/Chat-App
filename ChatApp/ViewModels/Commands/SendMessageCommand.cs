@@ -8,7 +8,6 @@ namespace ChatApp.ViewModels.Commands
     {
         public event EventHandler CanExecuteChanged;
         private MainViewModel parent = null;
-        private Message message;
         public SendMessageCommand(MainViewModel parent)
         {
             this.parent = parent;
