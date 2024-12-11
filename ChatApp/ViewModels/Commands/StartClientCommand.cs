@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace ChatApp.ViewModels.Commands
@@ -10,9 +6,8 @@ namespace ChatApp.ViewModels.Commands
     internal class StartClientCommand : ICommand
     {
         public event EventHandler CanExecuteChanged;
-        private tempViewModel parent = null;
-        // private readonly MainWindowViewModel _viewModel;
-        public StartClientCommand(tempViewModel parent)
+        private MainViewModel parent = null;
+        public StartClientCommand(MainViewModel parent)
         {
             this.parent = parent;
         }
@@ -24,33 +19,7 @@ namespace ChatApp.ViewModels.Commands
 
         public async void Execute(object parameter)
         {
-            if(parent.ValidateFields(out string errorMessage)) 
-            {
-                string isSuccessfull = parent.NetworkManager.startClient(parent.IpAddress, Int32.Parse(parent.PortNumber));
-                if (isSuccessfull == "200 OK")
-                {
-                    // öppna chatfönster
-                    parent.ValidationMessage = "";
-                    //parent.startClientBoard();
-                    parent.ActiveConnection = true;
-                } 
-                else if(isSuccessfull == "DENIED")
-                {
-                    parent.ValidationMessage = "Server denied connection";
-                }
-                else
-                {
-                    parent.ValidationMessage = isSuccessfull;
-                }
-            }
-            else
-            {
-                parent.ValidationMessage = errorMessage;
-            }
-            
-
-            
-
+           parent.ClientStart();
         }
     }
 }

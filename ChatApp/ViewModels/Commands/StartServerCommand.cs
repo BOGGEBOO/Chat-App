@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
-
-using ChatApp.ViewModels;
 
 namespace ChatApp.ViewModels.Commands
 {
@@ -13,8 +7,8 @@ namespace ChatApp.ViewModels.Commands
     {
 
         public event EventHandler CanExecuteChanged;
-        private tempViewModel parent = null;
-        public StartServerCommand(tempViewModel parent) 
+        private MainViewModel parent = null;
+        public StartServerCommand(MainViewModel parent) 
         {
             this.parent = parent;
         }
@@ -26,27 +20,7 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            
-            //parent.xxxx()
-            //xxx()
-            if (parent.ValidateFields(out string errorMessage))
-            {
-                string isSuccessful = parent.NetworkManager.startServer(parent.IpAddress, Int32.Parse(parent.PortNumber));
-                if(isSuccessful == "200 OK")
-                {
-                    parent.ValidationMessage = "";
-                    //parent.startGameBoard();
-                }
-                else
-                {
-                    parent.ValidationMessage += isSuccessful;
-                }
-                
-            }
-            else
-            {
-                parent.ValidationMessage += errorMessage;
-            }
+            parent.ServerStart();
         }
     }
 }

@@ -1,24 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-
-using ChatApp.Views;
-using ChatApp.ViewModels;
 using System.Text.Json;
-using System.Windows.Documents;
-using System.Windows;
-using Microsoft.VisualBasic;
-using System.Media;
-using System.Reflection.PortableExecutable;
-using System.Collections.ObjectModel;
-using System.Windows.Navigation;
 
 namespace ChatApp.Models
 {
@@ -30,8 +17,26 @@ namespace ChatApp.Models
         private Thread thread;
         private StreamReader reader;
         private StreamWriter writer;
-        public bool connectionAccepted;
+        private bool connectionAccepted;
+        public bool ConnectionAccepted
+        { 
+            get { return connectionAccepted; }
+            set 
+            { 
+                connectionAccepted = value;
+                OnPropertyChanged(connectionAccepted.ToString());
+            } 
+        }
         private bool connected;
+        public bool Connected
+        {
+            get { return connected; }
+            set 
+            { 
+                connected = value;
+                OnPropertyChanged(connected.ToString());
+            }
+        }
         private string sender;
         
         public string Sender
@@ -53,8 +58,6 @@ namespace ChatApp.Models
             set { lastMessage = value; }
         }
 
-        public event EventHandler<MessageRecievedEventArgs> messageRecieved;
-        public event EventHandler<ShowAcceptMessageBoxEventArgs> showAcceptMessageBox;
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void OnPropertyChanged(string propertyName = "")
@@ -77,24 +80,25 @@ namespace ChatApp.Models
                 {
                     try
                     {
+                        connected = true;
                         IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(host), port);
                         server = new TcpListener(ipEndPoint);
-                        while (true)
+                        
+                        while (!ConnectionAccepted)
                         {
                             server.Start();
                             System.Diagnostics.Debug.WriteLine("Start listening...");
 
                             client = server.AcceptTcpClient();
+                            thread = new Thread(listen);
+                            thread.IsBackground = true;
+                            thread.Start();
 
                             reader = new StreamReader(client.GetStream());
                             writer = new StreamWriter(client.GetStream());
 
                             System.Diagnostics.Debug.WriteLine("Connection accepted!");
 
-                            if (acceptConnection())
-                            {
-                                break;
-                            }
                         }
                     }
                     catch (Exception ex)
@@ -108,12 +112,10 @@ namespace ChatApp.Models
             {
                 if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
                 {
-                    System.Diagnostics.Debug.WriteLine("The address is already in use.");
                     return "The address is already in use.";
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("Error starting server: " + ex.Message);
                     return "Error starting server";
                 }
             }
@@ -123,66 +125,42 @@ namespace ChatApp.Models
             }
         }
 
-
-        private bool acceptConnection()
+        public string startClient(string host, int port)
         {
-            while (true)
+            try
             {
-                string data = reader.ReadLine();
-
-                if (data != null)
+                Task.Factory.StartNew(async () =>
                 {
-                    Message message = JsonSerializer.Deserialize<Message>(data);
-
-                    if (message.Type == "connection")
-                    {
-                        sender = message.Sender;
-                        break;
-                    }
-                }
-            }
-            server.Stop();
-            showAcceptMessageBox?.Invoke(null, new ShowAcceptMessageBoxEventArgs("Chat with " + sender + "?"));
-            while (true)
-            {
-                if (connectionAccepted)
-                {
-                    Message message = new Message("connection", username, DateTime.Now.ToString(), "ACCEPTED");
-                    sendMessage(message);
-
-                    thread = new Thread(listen);
-                    thread.IsBackground = true;
-                    thread.Start();
-
                     connected = true;
-                    return true;
-                }
-                else
-                {
-                    Message message = new Message("connection", username, DateTime.Now.ToString(), "DENIED");
-                    sendMessage(message);
-                    writer.Close();
-                    reader.Close();
-                    client.Dispose();
-                    client.Close();
-                    connected = false;
-                    return false;
-                }
+                    string errorMessage = "Error connecting to server. Check your information. ";
+                    try
+                    {
+                        client = new TcpClient(); //inte ha host, port här, skapar en connection då...
+
+
+                        client.Connect(host, port);
+                        thread = new Thread(listen);
+                        thread.IsBackground = true;
+                        thread.Start();
+
+                        writer = new StreamWriter(client.GetStream());
+                        reader = new StreamReader(client.GetStream());
+
+                        Message connection_request = new Message("connection_request", username, DateTime.Now.ToString());
+                        sendMessage(connection_request);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine(ex.ToString());
+
+                    }
+                });
+                return "200 OK";
             }
-        }
-
-        public void Disconnect()
-        {
-            if (client != null && client.Connected)
+            catch (Exception e)
             {
-                connected = false;
-                Message message = new Message("disconnect", username, DateTime.Now.ToString());
-                sendMessage(message);
-
-                writer.Close();
-                reader.Close();
-                client.Close();
-                connected = false;
+                System.Diagnostics.Debug.WriteLine(e.ToString());
+                return "Error when connecting. Please check your information and try again";
             }
         }
 
@@ -210,39 +188,18 @@ namespace ChatApp.Models
             {
                 try
                 {
-                    if (connected)
+                    string data = reader.ReadLine();
+
+                    if (data != null)
                     {
-                        string data = reader.ReadLine();
-
-                        if (data != null)
-                        {
-                            Message message = JsonSerializer.Deserialize<Message>(data);
-                            if (message.Type == "disconnect")
-                            {
-                                lastMessage = message;
-                                NotifyMessageChanged(message.Type);
-                                
-                                writer.Close();
-                                reader.Close();
-                                client.Close();
-                                connected = false;
-                                return;
-                            }
-                            else if (message.Type == "chat_message")
-                            {
-                                lastMessage = message;
-                                App.Current.Dispatcher.Invoke(() => { NotifyMessageChanged(message.Type); });
-
-                            }
-
-                        }
-
+                        Message message = JsonSerializer.Deserialize<Message>(data);
+                        lastMessage = message;
+                        App.Current.Dispatcher.Invoke(() => { NotifyMessageChanged(message.Type); });
                     }
                 }
                 catch (Exception e)
                 {
-                    System.Diagnostics.Debug.WriteLine(e.ToString());
-                    Message message = new Message("dramatic_disconnect", username, DateTime.Now.ToString());
+                    Message message = new Message("dramatic_disconnect", sender, DateTime.Now.ToString());
                     lastMessage = message;
                     App.Current.Dispatcher.Invoke(() => { NotifyMessageChanged(message.Type); });
                     
@@ -250,110 +207,24 @@ namespace ChatApp.Models
             }
         }
 
-        public void startClient(string host, int port)
+        public void Disconnect()
         {
-            Task.Factory.StartNew(async () =>
+            if (client != null && client.Connected)
             {
-                string errorMessage = "Error connecting to server. Check your information. ";
-                try
-                {
-                    client = new TcpClient(); //inte ha host, port här, skapar en connection då...
+                connected = false;
+                Message message = new Message("disconnect", username, DateTime.Now.ToString());
+                sendMessage(message);
 
-                    while (!client.Connected)
-                    {
-                        client.Connect(host, port);
-                    }
-
-                    writer = new StreamWriter(client.GetStream());
-                    reader = new StreamReader(client.GetStream());
-
-                    Message connection_request = new Message("connection", username, DateTime.Now.ToString());
-                    sendMessage(connection_request);
-                    Message response = receiveMessage();
-
-                    if (response.Content == "DENIED" && response.Type == "connection")
-                    {
-                        writer.Close();
-                        reader.Close();
-                        client.Close();
-                        return response.Content;
-                    }
-                }
-                catch (SocketException ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(ex.ToString());
-                    return "Error when connecting";
-
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(ex.ToString());
-
-                    return errorMessage;
-                }
-                return "200 OK";
-            });
-        }
-
-
-        public Message receiveMessage()
-        {
-            while (true)
-            {
-                string data = reader.ReadLine();
-
-                if (data != null)
-                {
-                    Message message = JsonSerializer.Deserialize<Message>(data);
-
-                    if (message.Type == "connection")
-                    {
-                        sender = message.Sender;
-                        if (message.Content == "ACCEPTED")
-                        {
-
-                            thread = new Thread(listen);
-                            thread.IsBackground = true;
-                            thread.Start();
-                            connected = true;
-                        }
-                        else if (message.Content == "DENIED")
-                        {
-                            connected = false;
-                            return message;
-                        }
-                        break;
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine(message.Type);
-                        break;
-                    }
-                }
+                Close();
             }
-            return new Message("", "", "");
         }
 
-        }
-        public class MessageRecievedEventArgs : EventArgs
+        public void Close()
         {
-            public MessageRecievedEventArgs(Message m)
-            {
-                message = m;
-            }
-
-            public Message message { get; set; }
+            writer.Close();
+            reader.Close();
+            client.Close();
+            connected = false;
         }
-
-        public class ShowAcceptMessageBoxEventArgs : EventArgs
-        {
-            public ShowAcceptMessageBoxEventArgs(string s)
-            {
-                text = s;
-            }
-
-            public string text { get; set; }
-        }
-
-    
+    }
 }

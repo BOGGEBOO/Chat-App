@@ -1,9 +1,5 @@
 ﻿using ChatApp.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace ChatApp.ViewModels.Commands
@@ -11,9 +7,9 @@ namespace ChatApp.ViewModels.Commands
     internal class SendMessageCommand : ICommand
     {
         public event EventHandler CanExecuteChanged;
-        private tempViewModel parent = null;
+        private MainViewModel parent = null;
         private Message message;
-        public SendMessageCommand(tempViewModel parent)
+        public SendMessageCommand(MainViewModel parent)
         {
             this.parent = parent;
         }
@@ -25,9 +21,7 @@ namespace ChatApp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            message = new Message("chat_message", parent.UserName, DateTime.Now.ToString(), parent.NewMessage);
-            parent.NetworkManager.sendMessage(message);
-            parent.Conversation.Add(message);        
+            parent.MessageSend();        
         }
     }
 }
