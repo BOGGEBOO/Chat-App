@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:ChatApp.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
@@ -18,6 +19,7 @@
             <RowDefinition Height="4*"/>
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        
         <StackPanel VerticalAlignment="Top" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2">
             <TextBlock Text="{Binding ValidationMessage}" Foreground="Red" />
             <TextBlock Text="Enter your name:" Margin="3,0,0,2"  FontSize="10"/>
@@ -42,27 +44,22 @@
                 <TextBox Text="{Binding SearchString}" Grid.Row="0" Grid.Column="0" Width="120"/>
                 <Button Content="Search" Command="{Binding Search}" Width="100" Grid.Row="0"  Grid.Column="1"/>
             </Grid>
-            
-            <ListView Height="170" ScrollViewer.CanContentScroll="False"  >
-                <ItemsControl ItemsSource="{Binding ShownContacts}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <ListViewItem>
-                                <ListViewItem.Content>
-                                    <TextBlock>
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0}: {1}">
-                                                <Binding Path="Name" />
-                                                <Binding Path="LastActive" />
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                </ListViewItem.Content>
-                            </ListViewItem>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ListView>
+            <ListBox Name="ContactList" SelectedItem="{Binding SelectedProperty}" Height="165"  SelectionMode="Single" ItemsSource="{Binding ShownContacts}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0}: {1}">
+                                    <Binding Path="Name" />
+                                    <Binding Path="LastActive" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </StackPanel>
         <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"  Grid.RowSpan="3" Margin="10" Name="Root">
             <TextBlock Text="Chat" Margin="10" FontSize="10"/>
@@ -90,8 +87,15 @@
         <DockPanel Grid.Row="3" Grid.Column="1">
             <TextBox Height="30" Text="{Binding NewMessage, Mode=TwoWay}" TextWrapping="Wrap" VerticalAlignment="Center"/>
         </DockPanel>
-        <DockPanel Grid.Row="3" Grid.Column="2">
-            <Button Content="Send" Command="{Binding SendMessage}" Margin="10" VerticalAlignment="Center" IsEnabled="{Binding ActiveConnection}"/>
+        <DockPanel Grid.Row="3" Grid.Column="2" Margin="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+            <Button Grid.Row="0" Content="Send" Command="{Binding SendMessage}" VerticalAlignment="Center" IsEnabled="{Binding ActiveConnection}"/>
+            <Button Grid.Row="1" Content="Buzz" Command="{Binding SendBuzz}"  VerticalAlignment="Center" IsEnabled="{Binding ActiveConnection}"/>
+            </Grid>
         </DockPanel>
 
     </Grid>

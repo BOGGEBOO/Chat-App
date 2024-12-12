@@ -4,14 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
+using ChatApp.Views;
+using System.ComponentModel;
 
 namespace ChatApp.ViewModels
 {
-    internal class MainViewModel : BaseViewModel
+    internal class MainViewModel : INotifyPropertyChanged
     {
-
+        public event PropertyChangedEventHandler PropertyChanged;
         public MainViewModel(NetworkManager networkManager, HistoryManager historyManager)
         {
             this.networkManager = networkManager;
@@ -19,6 +22,30 @@ namespace ChatApp.ViewModels
             networkManager.PropertyChanged += networkManager_StatusPropertyChanged;
             this.historyManager = historyManager;
             this.conversation = new ObservableCollection<Message>();
+        }
+
+        protected void OnPropertyChanged(string propertyName = "")
+        {
+            System.Diagnostics.Debug.WriteLine(propertyName);
+            if(propertyName == "selectedProperty")
+            {
+                changeConversation();
+            }
+            PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void changeConversation()
+        {
+            WriteHistory();
+            Disconnecting();
+
+            if(selectedProperty != null)
+            {
+                Conversation = new ObservableCollection<Message>(selectedProperty.Messages);
+                OnPropertyChanged(nameof(Conversation));
+                System.Diagnostics.Debug.WriteLine(Conversation.Count);
+            }
+            
         }
 
         private NetworkManager networkManager;
@@ -164,8 +191,7 @@ namespace ChatApp.ViewModels
 
         public void Disconnecting()
         {
-            contacts.Add(new Contact(networkManager.Sender, DateTime.Now.ToString(), new List<Message>(Conversation)));
-            ShownContacts = new ObservableCollection<Contact>(contacts);
+            UpdateFriendList();
             WriteHistory();
             networkManager.Disconnect();
             ActiveConnection = false;
@@ -196,6 +222,29 @@ namespace ChatApp.ViewModels
             Message message = new Message("chat_message", UserName, DateTime.Now.ToString("g"), NewMessage);
             networkManager.sendMessage(message);
             Conversation.Add(message);
+        }
+
+        private ICommand sendbuzz;
+        public ICommand SendBuzz
+        {
+            get
+            {
+                if(sendbuzz == null)
+                {
+                    sendbuzz = new SendBuzzCommand(this);
+                }
+                return sendbuzz;
+            }
+            set 
+            { 
+                sendbuzz = value; 
+            }
+        }
+
+        public void BuzzSend()
+        {
+            Message message = new Message("Buzz", UserName, DateTime.Now.ToString("g"));
+            networkManager.sendMessage(message);
         }
 
         private ICommand search;
@@ -306,9 +355,15 @@ namespace ChatApp.ViewModels
             {
                 Conversation.Add(networkManager.LastMessage);
             }
+            else if (e.PropertyName.Equals("Buzz"))
+            {
+                //skaka skaka
+                System.Media.SystemSounds.Exclamation.Play();
+            }
             else if (e.PropertyName.Equals("disconnect"))
             {
                 ActiveConnection = false;
+                UpdateFriendList();
                 WriteHistory();
                 Message message = networkManager.LastMessage;
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
@@ -321,6 +376,7 @@ namespace ChatApp.ViewModels
                 {
                     return;
                 }
+                UpdateFriendList();
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
                 WriteHistory();
             }
@@ -373,12 +429,31 @@ namespace ChatApp.ViewModels
             historyManager.Write(contacts, userName);
         }
 
+        private void UpdateFriendList()
+        {
+            contacts.Add(new Contact(networkManager.Sender, DateTime.Now.ToString(), new List<Message>(Conversation)));
+            ShownContacts = new ObservableCollection<Contact>(contacts);
+            OnPropertyChanged(nameof(ShownContacts));
+        }
+
         void OnProcessExit(object sender, EventArgs e)
         {
             WriteHistory();
         }
-
-
+        private Contact selectedProperty;
+        public Contact SelectedProperty
+        {
+            get 
+            {
+                
+                return selectedProperty; 
+            } 
+            set 
+            { 
+                selectedProperty = value;
+                OnPropertyChanged(nameof(selectedProperty));
+            }
+        }
     }
 }
 

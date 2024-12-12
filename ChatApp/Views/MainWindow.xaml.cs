@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 using ChatApp.Models;
 using ChatApp.ViewModels;
 
@@ -14,5 +15,7 @@ namespace ChatApp.Views
             InitializeComponent();
             this.DataContext = new MainViewModel(new NetworkManager(), new HistoryManager());
         }
+        
+
     }
 }
