@@ -9,19 +9,23 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using ChatApp.Views;
 using System.ComponentModel;
+using System.Windows.Media.Animation;
 
 namespace ChatApp.ViewModels
 {
     internal class MainViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public MainViewModel(NetworkManager networkManager, HistoryManager historyManager)
+
+        private MainWindow window;
+        public MainViewModel(NetworkManager networkManager, HistoryManager historyManager, MainWindow window)
         {
             this.networkManager = networkManager;
             networkManager.PropertyChanged += networkManager_PropertyChanged;
             networkManager.PropertyChanged += networkManager_StatusPropertyChanged;
             this.historyManager = historyManager;
             this.conversation = new ObservableCollection<Message>();
+            this.window = window;
         }
 
         protected void OnPropertyChanged(string propertyName = "")
@@ -69,7 +73,11 @@ namespace ChatApp.ViewModels
 
         }
 
-
+        public bool InactiveConnection
+        {
+            get { return !ActiveConnection; }
+            
+        }
 
         private string userName = "";
         public string UserName
@@ -140,6 +148,17 @@ namespace ChatApp.ViewModels
             }
         }
 
+        private bool signedOut = true;
+        public bool SignedOut
+        {
+            get { return signedOut; }
+            set
+            {
+                signedOut = value;
+                OnPropertyChanged(nameof(SignedOut));
+            }
+        }
+
         private ICommand startServer;
         public ICommand StartServer
         {
@@ -197,6 +216,10 @@ namespace ChatApp.ViewModels
             ActiveConnection = false;
             networkManager.Connected = false;
             Conversation.Clear();
+            OnPropertyChanged(nameof(Conversation));
+            ShownContacts.Clear();
+            OnPropertyChanged(nameof(ShownContacts));
+            SignedOut = true;
         }
 
         private ICommand sendMessage;
@@ -287,6 +310,7 @@ namespace ChatApp.ViewModels
                 contacts = historyManager.Read(userName);
                 ShownContacts = new ObservableCollection<Contact>(contacts);
                 OnPropertyChanged(nameof(ShownContacts));
+                SignedOut = false;
             }
             else
             {
@@ -301,6 +325,7 @@ namespace ChatApp.ViewModels
                 contacts = historyManager.Read(userName);
                 ShownContacts = new ObservableCollection<Contact>(contacts);
                 OnPropertyChanged(nameof(ShownContacts));
+                SignedOut = false;
             }
             else
             {
@@ -334,19 +359,24 @@ namespace ChatApp.ViewModels
             if(e.PropertyName.Equals("no_listener"))
             {
                 ValidationMessage = "No one is listening to this port/IP adress";
+                SignedOut = true;
             }
             else if(e.PropertyName.Equals("busy_adress"))
             {
                 ValidationMessage = "This adress is already in use";
+                SignedOut = true;
             }
             else if(e.PropertyName.Equals("no_start"))
             {
                 ValidationMessage = "Error starting server. Please check your information or try again later.";
+                SignedOut = true;
             }
             else if(e.PropertyName.Equals("connection_error"))
             {
                 ValidationMessage = "Error when connecting. Check your information and try again.";
+                SignedOut = true;
             }
+           
         }
 
         private void networkManager_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -365,16 +395,20 @@ namespace ChatApp.ViewModels
             }
             else if (e.PropertyName.Equals("Buzz"))
             {
-                //skaka skaka
                 Buzzed = true;
-                OnPropertyChanged(nameof(Buzzed));
-                System.Media.SystemSounds.Exclamation.Play();
+                Storyboard sb = window.Resources["sb"] as Storyboard;
+                sb.Begin(window);
             }
             else if (e.PropertyName.Equals("disconnect"))
             {
                 ActiveConnection = false;
                 UpdateFriendList();
                 WriteHistory();
+                Conversation.Clear();
+                OnPropertyChanged(nameof(Conversation));
+                ShownContacts.Clear();
+                OnPropertyChanged(nameof(ShownContacts));
+                SignedOut = true;
                 Message message = networkManager.LastMessage;
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
             }
@@ -387,6 +421,11 @@ namespace ChatApp.ViewModels
                     return;
                 }
                 UpdateFriendList();
+                Conversation.Clear();
+                OnPropertyChanged(nameof(Conversation));
+                ShownContacts.Clear();
+                OnPropertyChanged(nameof(ShownContacts));
+                SignedOut = true;
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
                 WriteHistory();
             }
@@ -405,6 +444,7 @@ namespace ChatApp.ViewModels
                 networkManager.Sender = message.Sender;
                 Message connectionMessage = new Message("chat_message", "System", DateTime.Now.ToString("g"), "You are now chatting with " + message.Sender);
                 Conversation.Add(connectionMessage);
+                SignedOut = false;
             }
             else
             {
@@ -412,6 +452,7 @@ namespace ChatApp.ViewModels
                 response.Content = "DENIED";
                 networkManager.sendMessage(response);
                 networkManager.Close();
+                SignedOut = true;
             }
         }
 
@@ -425,12 +466,14 @@ namespace ChatApp.ViewModels
                 ActiveConnection = true;
                 Message connectionMessage = new Message("chat_message", "System", DateTime.Now.ToString("g"), "You are now chatting with " + message.Sender);
                 Conversation.Add(connectionMessage);
+                SignedOut = false;
             }
             else if (message.Content == "DENIED")
             {
                 ValidationMessage = "Server denied connection";
                 networkManager.Close();
                 ActiveConnection = false;
+                SignedOut = true;
             }
         }
 

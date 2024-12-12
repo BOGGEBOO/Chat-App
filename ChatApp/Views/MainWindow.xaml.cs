@@ -13,7 +13,7 @@ namespace ChatApp.Views
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = new MainViewModel(new NetworkManager(), new HistoryManager());
+            this.DataContext = new MainViewModel(new NetworkManager(), new HistoryManager(), this);
         }
         
 

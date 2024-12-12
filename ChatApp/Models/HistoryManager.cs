@@ -23,7 +23,8 @@ namespace ChatApp.Models
 
         public List<Contact> Read(string fileName)
         {
-            string path = "X:\\TDDD49\\ChatApp\\Data\\" + fileName + ".json";
+            string path = Directory.GetCurrentDirectory() + "\\..\\..\\..\\Data\\" + fileName + ".json";
+            
             if(!File.Exists(path))
             {
                 System.Diagnostics.Debug.WriteLine("NO FILE!!!");
@@ -37,7 +38,7 @@ namespace ChatApp.Models
         public void Write(List<Contact> conversations, string fileName)
         {
             string conversationHistory = JsonSerializer.Serialize(conversations);
-            File.WriteAllText("X:\\TDDD49\\ChatApp\\Data\\" + fileName + ".json", conversationHistory);
+            File.WriteAllText(Directory.GetCurrentDirectory() + "\\..\\..\\..\\Data\\" + fileName + ".json", conversationHistory);
         }
     }
 }
