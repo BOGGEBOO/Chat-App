@@ -224,6 +224,14 @@ namespace ChatApp.ViewModels
             Conversation.Add(message);
         }
 
+        private bool buzzed;
+        public bool Buzzed
+        {
+            get { return buzzed; }
+            set { buzzed = value; OnPropertyChanged(nameof(buzzed));  }
+        
+        }
+
         private ICommand sendbuzz;
         public ICommand SendBuzz
         {
@@ -358,6 +366,8 @@ namespace ChatApp.ViewModels
             else if (e.PropertyName.Equals("Buzz"))
             {
                 //skaka skaka
+                Buzzed = true;
+                OnPropertyChanged(nameof(Buzzed));
                 System.Media.SystemSounds.Exclamation.Play();
             }
             else if (e.PropertyName.Equals("disconnect"))
