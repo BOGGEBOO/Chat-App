@@ -30,24 +30,23 @@ namespace ChatApp.ViewModels
 
         protected void OnPropertyChanged(string propertyName = "")
         {
-            System.Diagnostics.Debug.WriteLine(propertyName);
+            
             if(propertyName == "selectedProperty")
             {
                 changeConversation();
             }
+            
             PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void changeConversation()
         {
-            WriteHistory();
             Disconnecting();
-
-            if(selectedProperty != null)
+            
+            if (selectedProperty != null)
             {
                 Conversation = new ObservableCollection<Message>(selectedProperty.Messages);
                 OnPropertyChanged(nameof(Conversation));
-                System.Diagnostics.Debug.WriteLine(Conversation.Count);
             }
             
         }
@@ -71,12 +70,6 @@ namespace ChatApp.ViewModels
             get { return shownContacts; }
             set { shownContacts = value; }
 
-        }
-
-        public bool InactiveConnection
-        {
-            get { return !ActiveConnection; }
-            
         }
 
         private string userName = "";
@@ -144,7 +137,7 @@ namespace ChatApp.ViewModels
             set
             {
                 activeConnection = value;
-                OnPropertyChanged(nameof(ActiveConnection));
+               OnPropertyChanged(nameof(ActiveConnection));
             }
         }
 
@@ -210,16 +203,19 @@ namespace ChatApp.ViewModels
 
         public void Disconnecting()
         {
-            UpdateFriendList();
-            WriteHistory();
-            networkManager.Disconnect();
-            ActiveConnection = false;
+            if(networkManager.Sender != "")
+            {
+                UpdateFriendList();
+                networkManager.Disconnect();
+                WriteHistory();
+                SignedOut = true;
+                ActiveConnection = false;
+            }
+            networkManager.Sender = "";
             networkManager.Connected = false;
             Conversation.Clear();
             OnPropertyChanged(nameof(Conversation));
-            ShownContacts.Clear();
-            OnPropertyChanged(nameof(ShownContacts));
-            SignedOut = true;
+            
         }
 
         private ICommand sendMessage;
@@ -251,7 +247,7 @@ namespace ChatApp.ViewModels
         public bool Buzzed
         {
             get { return buzzed; }
-            set { buzzed = value; OnPropertyChanged(nameof(buzzed));  }
+            set { buzzed = value; }
         
         }
 
@@ -401,33 +397,21 @@ namespace ChatApp.ViewModels
             }
             else if (e.PropertyName.Equals("disconnect"))
             {
-                ActiveConnection = false;
-                UpdateFriendList();
-                WriteHistory();
-                Conversation.Clear();
-                OnPropertyChanged(nameof(Conversation));
-                ShownContacts.Clear();
-                OnPropertyChanged(nameof(ShownContacts));
-                SignedOut = true;
+                Disconnecting();
                 Message message = networkManager.LastMessage;
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from dead.", "whoop", MessageBoxButton.OK);
+                
             }
             else if (e.PropertyName.Equals("dramatic_disconnect"))
             {
-                ActiveConnection = false;
                 Message message = networkManager.LastMessage;
                 if (!networkManager.Connected)
                 {
                     return;
                 }
-                UpdateFriendList();
-                Conversation.Clear();
-                OnPropertyChanged(nameof(Conversation));
-                ShownContacts.Clear();
-                OnPropertyChanged(nameof(ShownContacts));
-                SignedOut = true;
+                Disconnecting();
                 MessageBox.Show(message.Sender + " has disconnected due to suffering from unnatural deadness.", "whoop", MessageBoxButton.OK);
-                WriteHistory();
+                
             }
         }
 
@@ -442,6 +426,8 @@ namespace ChatApp.ViewModels
                 response.Content = "ACCEPTED";
                 networkManager.sendMessage(response);
                 networkManager.Sender = message.Sender;
+                Conversation.Clear();
+                OnPropertyChanged(nameof(Conversation));
                 Message connectionMessage = new Message("chat_message", "System", DateTime.Now.ToString("g"), "You are now chatting with " + message.Sender);
                 Conversation.Add(connectionMessage);
                 SignedOut = false;
@@ -464,6 +450,8 @@ namespace ChatApp.ViewModels
                 networkManager.Sender = message.Sender;
                 ValidationMessage = "";
                 ActiveConnection = true;
+                Conversation.Clear();
+                OnPropertyChanged(nameof(Conversation));
                 Message connectionMessage = new Message("chat_message", "System", DateTime.Now.ToString("g"), "You are now chatting with " + message.Sender);
                 Conversation.Add(connectionMessage);
                 SignedOut = false;
@@ -486,7 +474,6 @@ namespace ChatApp.ViewModels
         {
             contacts.Add(new Contact(networkManager.Sender, DateTime.Now.ToString(), new List<Message>(Conversation)));
             ShownContacts = new ObservableCollection<Contact>(contacts);
-            OnPropertyChanged(nameof(ShownContacts));
         }
 
         void OnProcessExit(object sender, EventArgs e)
@@ -498,7 +485,6 @@ namespace ChatApp.ViewModels
         {
             get 
             {
-                
                 return selectedProperty; 
             } 
             set 

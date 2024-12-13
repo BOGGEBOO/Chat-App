@@ -37,7 +37,7 @@ namespace ChatApp.Models
                 OnPropertyChanged(connected.ToString());
             }
         }
-        private string sender;
+        private string sender = "";
         
         public string Sender
         {
@@ -240,7 +240,7 @@ namespace ChatApp.Models
         {
             if (client != null && client.Connected)
             {
-                connected = false;
+                Connected = false;
                 Message message = new Message("disconnect", username, DateTime.Now.ToString("g"));
                 sendMessage(message);
 
@@ -253,7 +253,7 @@ namespace ChatApp.Models
             writer.Close();
             reader.Close();
             client.Close();
-            connected = false;
+            Connected = false;
         }
     }
 }
