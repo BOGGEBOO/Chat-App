@@ -11,13 +11,16 @@ namespace ChatApp.Models
 {
     public class HistoryManager
     {
-        public List<Contact> Search(string searchString, List<Contact> searchField)
+        public List<Contact> Search(List<Contact> searchField, string searchString = "")
         {
+            if(searchString == null)
+            {
+                searchString = "";
+            }
             IEnumerable<Contact> queryResult = 
                 from s in searchField
                 where s.Name.Contains(searchString)
                 select s;
-            System.Diagnostics.Debug.WriteLine(queryResult.Count());
             return queryResult.ToList();
         }
 

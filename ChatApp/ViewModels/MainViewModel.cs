@@ -30,25 +30,26 @@ namespace ChatApp.ViewModels
 
         protected void OnPropertyChanged(string propertyName = "")
         {
-            
-            if(propertyName == "selectedProperty")
+            if(propertyName == "SelectedProperty" && selectedProperty != null)
             {
                 changeConversation();
             }
-            
+           
             PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
         }
 
-        private void changeConversation()
+        private async void changeConversation()
         {
-            Disconnecting();
             
-            if (selectedProperty != null)
+            if(networkManager.Sender != "")
             {
-                Conversation = new ObservableCollection<Message>(selectedProperty.Messages);
-                OnPropertyChanged(nameof(Conversation));
+                Disconnecting();
             }
-            
+                
+            Conversation = new ObservableCollection<Message>(selectedProperty.Messages);
+            OnPropertyChanged(nameof(Conversation));
+            selectedProperty = new Contact("", "", new List<Message>());
         }
 
         private NetworkManager networkManager;
@@ -213,6 +214,7 @@ namespace ChatApp.ViewModels
             }
             networkManager.Sender = "";
             networkManager.Connected = false;
+            
             Conversation.Clear();
             OnPropertyChanged(nameof(Conversation));
             
@@ -293,7 +295,7 @@ namespace ChatApp.ViewModels
 
         public void SearchContacts()
         {
-            List<Contact> holder = historyManager.Search(searchString, contacts);
+            List<Contact> holder = historyManager.Search(contacts, searchString);
             ShownContacts = new ObservableCollection<Contact>(holder);
             OnPropertyChanged(nameof(ShownContacts));
         }
@@ -310,6 +312,7 @@ namespace ChatApp.ViewModels
             }
             else
             {
+                SignedOut = true;
                 ValidationMessage += errorMessage;
             }
         }
@@ -320,11 +323,12 @@ namespace ChatApp.ViewModels
                 networkManager.startClient(IpAddress, Int32.Parse(PortNumber));
                 contacts = historyManager.Read(userName);
                 ShownContacts = new ObservableCollection<Contact>(contacts);
-                OnPropertyChanged(nameof(ShownContacts));
+                //OnPropertyChanged(nameof(ShownContacts));
                 SignedOut = false;
             }
             else
             {
+                SignedOut = true;
                 ValidationMessage = errorMessage;
             }
         }
@@ -473,7 +477,8 @@ namespace ChatApp.ViewModels
         private void UpdateFriendList()
         {
             contacts.Add(new Contact(networkManager.Sender, DateTime.Now.ToString(), new List<Message>(Conversation)));
-            ShownContacts = new ObservableCollection<Contact>(contacts);
+            shownContacts = new ObservableCollection<Contact>(contacts);
+            selectedProperty = new Contact("", "", new List<Message>());
         }
 
         void OnProcessExit(object sender, EventArgs e)
@@ -490,7 +495,8 @@ namespace ChatApp.ViewModels
             set 
             { 
                 selectedProperty = value;
-                OnPropertyChanged(nameof(selectedProperty));
+                
+                OnPropertyChanged(nameof(SelectedProperty));
             }
         }
     }
